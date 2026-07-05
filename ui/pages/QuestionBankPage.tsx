@@ -1,15 +1,17 @@
 // ui/pages/QuestionBankPage.tsx
-// Question Bank — now a two-phase flow instead of dropping straight into
-// question 1: a setup screen (difficulty filter, live count preview),
-// mirroring HLOS's practice/page.tsx "pick domain → count → difficulty →
-// start" pattern, then a focus-mode session (chrome hidden via
-// onFocusChange, matching HLOS's distraction-free assess/session screen).
+// Question Bank — a two-phase flow: a setup screen (difficulty filter, live
+// count preview), then a focus-mode session (chrome hidden via
+// onFocusChange). Fully bilingual: chrome via t(), questions/options come
+// pre-localized from the Question Engine when lang="ar". Command-derived
+// MCQ options (q.id contains "cmdmcq") always render dir="ltr" since their
+// text IS a literal CLI command, never translated.
 
 import React, { useMemo, useState } from "react";
 import * as questionEngine from "../../engines/question-engine";
 import * as reviewEngine from "../../engines/review-engine";
 import { getCurrentUserId } from "../../services/current-user";
 import RecallAnswer from "../components/RecallAnswer";
+import { useLanguage } from "../i18n/LanguageContext";
 import type { QuestionItem, Difficulty } from "../../engines/knowledge-engine/types";
 
 export interface QuestionBankPageProps {
@@ -23,17 +25,21 @@ interface AnsweredState {
   correct: boolean | null; // null = typed but not yet graded
 }
 
-const LETTERS = ["A", "B", "C", "D", "E", "F"];
+const LETTERS_EN = ["A", "B", "C", "D", "E", "F"];
+const LETTERS_AR = ["أ", "ب", "ج", "د", "هـ", "و"];
 const DIFFICULTY_FILTERS: Array<Difficulty | "All"> = ["All", "Easy", "Medium", "Hard"];
 
 export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBankPageProps) {
+  const { t, lang } = useLanguage();
+  const LETTERS = lang === "ar" ? LETTERS_AR : LETTERS_EN;
+
   const allQuestions = useMemo<QuestionItem[]>(() => {
     try {
-      return questionEngine.generateQuestionSet({ topicId, depth: 1 });
+      return questionEngine.generateQuestionSet({ topicId, depth: 1, lang });
     } catch {
       return [];
     }
-  }, [topicId]);
+  }, [topicId, lang]);
 
   const [difficultyFilter, setDifficultyFilter] = useState<Difficulty | "All">("All");
   const [started, setStarted] = useState(false);
@@ -49,12 +55,8 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
   if (allQuestions.length === 0) {
     return (
       <div style={S.emptyState}>
-        <strong>No questions available for "{topicId}" yet.</strong>
-        <p style={S.muted}>
-          This can happen if the topic's knowledge module is missing config_commands,
-          exam_traps, or interview_questions — the Question Engine only generates
-          questions from fields that actually have content.
-        </p>
+        <strong>{t("questionBank.noQuestionsTitle", { topic: topicId })}</strong>
+        <p style={S.muted}>{t("questionBank.noQuestionsBody")}</p>
       </div>
     );
   }
@@ -64,14 +66,12 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
     return (
       <div className="ccna-anim-fade-up" style={S.setupWrap}>
         <div style={S.setupHeader}>
-          <h1 style={S.setupTitle}>Question bank</h1>
-          <p style={S.setupSubtitle}>
-            {topicId.toUpperCase()} and its directly related topics · type-in-the-answer drills
-          </p>
+          <h1 style={S.setupTitle}>{t("questionBank.title")}</h1>
+          <p style={S.setupSubtitle}>{t("questionBank.subtitle", { topic: topicId.toUpperCase() })}</p>
         </div>
 
         <div style={S.setupCard}>
-          <label style={S.setupLabel}>Difficulty</label>
+          <label style={S.setupLabel}>{t("questionBank.difficultyLabel")}</label>
           <div style={S.pillRow}>
             {DIFFICULTY_FILTERS.map((d) => {
               const count = d === "All" ? allQuestions.length : allQuestions.filter((q) => q.difficulty === d).length;
@@ -85,14 +85,14 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
                   style={{ ...S.pill, ...(active ? S.pillActive : null) }}
                   disabled={count === 0}
                 >
-                  {d} <span style={S.pillCount}>{count}</span>
+                  {d === "All" ? t("questionBank.all") : t(`common.difficulty.${d}`)} <span style={S.pillCount}>{count}</span>
                 </button>
               );
             })}
           </div>
 
           <div style={S.quotaRow}>
-            <span style={S.quotaLabel}>Questions in this session</span>
+            <span style={S.quotaLabel}>{t("questionBank.questionsInSession")}</span>
             <span style={S.quotaValue}>{questions.length}</span>
           </div>
 
@@ -108,7 +108,7 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
               onFocusChange?.(true);
             }}
           >
-            🎯 Start practicing
+            {t("questionBank.startPracticing")}
           </button>
         </div>
       </div>
@@ -123,12 +123,12 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
     return (
       <div style={S.finish} className="ccna-anim-fade-up">
         <div style={S.finishBadge}>{pct >= 80 ? "🎉" : pct >= 50 ? "💪" : "📘"}</div>
-        <h2 style={S.finishTitle}>Session complete</h2>
+        <h2 style={S.finishTitle}>{t("questionBank.sessionComplete")}</h2>
         <div style={S.bigScore} className="ccna-anim-pop">
           {pct}%
         </div>
         <p style={S.muted}>
-          {correct} correct out of {graded.length} graded ({questions.length - graded.length} skipped).
+          {t("questionBank.correctOutOf", { correct, total: graded.length, skipped: questions.length - graded.length })}
         </p>
         <button
           style={S.restartBtn}
@@ -138,7 +138,7 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
             onFocusChange?.(false);
           }}
         >
-          Practice again
+          {t("questionBank.practiceAgain")}
         </button>
       </div>
     );
@@ -146,6 +146,7 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
 
   const q = questions[index];
   const state = answers[q.id];
+  const isCommandOption = q.id.includes("cmdmcq");
 
   const answerMcq = (picked: string) => {
     const correct = picked === q.correct_answer;
@@ -183,9 +184,7 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
         <span style={S.scorePill}>
           {correctCount} / {answeredCount}
         </span>
-        <span style={S.progressLabel}>
-          {answeredCount} of {questions.length} answered
-        </span>
+        <span style={S.progressLabel}>{t("questionBank.answered", { answered: answeredCount, total: questions.length })}</span>
       </div>
       <div style={S.progressTrack}>
         <div style={{ ...S.progressFill, width: `${(answeredCount / questions.length) * 100}%` }} />
@@ -201,8 +200,8 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
         className={"ccna-anim-fade-up" + (state?.correct === false ? " ccna-anim-shake" : "")}
       >
         <div style={S.qmeta}>
-          <span style={S.topicTag}>{q.source_topic.toUpperCase()}</span>
-          <span style={S.diffTag}>{q.difficulty}</span>
+          <span style={S.topicTag} dir="ltr">{q.source_topic.toUpperCase()}</span>
+          <span style={S.diffTag}>{t(`common.difficulty.${q.difficulty}`)}</span>
           <span style={S.qnum}>
             {index + 1} / {questions.length}
           </span>
@@ -232,6 +231,7 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
                   onClick={() => answerMcq(opt)}
                   style={style}
                   className={!state ? "ccna-hoverable ccna-press" : undefined}
+                  dir={isCommandOption ? "ltr" : undefined}
                 >
                   <span style={letterStyle}>{LETTERS[i]}</span>
                   {opt}
@@ -259,7 +259,7 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
           disabled={index === 0}
           onClick={() => setIndex((i) => Math.max(0, i - 1))}
         >
-          Previous
+          {t("questionBank.previous")}
         </button>
         <button
           type="button"
@@ -267,7 +267,7 @@ export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBan
           className="ccna-hoverable ccna-press"
           onClick={() => setIndex((i) => i + 1)}
         >
-          {state ? "Next" : "Skip"}
+          {state ? t("questionBank.next") : t("questionBank.skip")}
         </button>
       </div>
     </div>
@@ -284,7 +284,7 @@ const S: Record<string, React.CSSProperties> = {
   pillRow: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 },
   pill: { padding: "8px 14px", borderRadius: 999, border: "1px solid var(--border)", background: "var(--card-bg)", color: "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer" },
   pillActive: { borderColor: "var(--accent)", background: "var(--accent-bg)", color: "var(--accent-text)" },
-  pillCount: { fontSize: 11, opacity: 0.7, marginLeft: 3, fontFamily: "var(--font-mono)" },
+  pillCount: { fontSize: 11, opacity: 0.7, marginInlineStart: 3, fontFamily: "var(--font-mono)" },
   quotaRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderRadius: 10, background: "var(--hover-bg)", fontSize: 12.5, marginBottom: 18 },
   quotaLabel: { color: "var(--text-secondary)" },
   quotaValue: { fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-mono)" },
@@ -299,9 +299,9 @@ const S: Record<string, React.CSSProperties> = {
   qmeta: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10 },
   topicTag: { fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 999, textTransform: "uppercase", background: "var(--accent-bg, #EEECFC)", color: "var(--accent-text, #4B3FB0)" },
   diffTag: { fontSize: 11, color: "var(--text-muted, #9C9B94)" },
-  qnum: { marginLeft: "auto", fontSize: 12, color: "var(--text-muted, #9C9B94)" },
-  prompt: { fontSize: 15.5, lineHeight: 1.5, margin: "0 0 14px" },
-  option: { display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", padding: "11px 14px", marginBottom: 8, border: "1px solid var(--border, #E3E2DC)", borderRadius: 8, background: "var(--card-bg)", fontSize: 14, cursor: "pointer", color: "var(--text-primary, #1A1A18)" },
+  qnum: { marginInlineStart: "auto", fontSize: 12, color: "var(--text-muted, #9C9B94)", fontFamily: "var(--font-mono)" },
+  prompt: { fontSize: 15.5, lineHeight: 1.6, margin: "0 0 14px" },
+  option: { display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "start", padding: "11px 14px", marginBottom: 8, border: "1px solid var(--border, #E3E2DC)", borderRadius: 8, background: "var(--card-bg)", fontSize: 14, cursor: "pointer", color: "var(--text-primary, #1A1A18)" },
   optionLetter: { width: 22, height: 22, borderRadius: "50%", border: "1.5px solid var(--border-strong)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", flexShrink: 0 },
   optionLetterCorrect: { borderColor: "var(--difficulty-easy)", background: "var(--difficulty-easy)", color: "#fff" },
   optionLetterWrong: { borderColor: "var(--difficulty-hard)", background: "var(--difficulty-hard)", color: "#fff" },

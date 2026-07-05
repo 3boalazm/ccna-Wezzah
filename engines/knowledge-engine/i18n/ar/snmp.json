@@ -1,0 +1,43 @@
+{
+  "path": [
+    "CCNA",
+    "خدمات IP",
+    "SNMP"
+  ],
+  "overview": "بروتوكول SNMP هو بروتوكول من طبقة التطبيقات بيستخدم لمراقبة وإدارة أجهزة الشبكة من محطة إدارة مركزية.",
+  "definitions": [
+    "SNMP Manager / NMS: البرنامج (زي Cisco Prime) اللي بيجمع البيانات من الأجهزة المُدارة.",
+    "SNMP Agent: العملية الشغالة على الراوتر/السويتش واللي بترد على المدير وبتقدر تبعت إشعارات أحداث.",
+    "MIB: قاعدة معلومات الإدارة — قاعدة بيانات من المتغيرات (OIDs) جوا الجهاز بتوصف حالته."
+  ],
+  "core_concepts": [
+    "رسائل Get/Set بيبدأها الـ Manager عشان يقرا أو يغيّر قيمة.",
+    "رسائل Trap/Inform بيبدأها الـ Agent عشان يبلّغ الـ Manager بحدث (زي واجهة وقعت)؛ الـ Inform بيحتاج تأكيد، الـ Trap لا.",
+    "SNMPv2c بيعتمد على Community Strings نص واضح؛ SNMPv3 بيضيف مصادقة وتشفير حقيقيين."
+  ],
+  "protocol_operation": [
+    "الـ Manager بيبعت Get/Set لمنفذ UDP 161 بتاع الـ Agent.",
+    "الـ Agent بيرد بقيمة الـ MIB المطلوبة أو بيأكد الـ Set.",
+    "الـ Agent بيبعت باستقلالية Trap/Inform لمنفذ UDP 162 بتاع الـ Manager لما حدث مهم يحصل."
+  ],
+  "packet_flow": "NMS -> طلب Get/Set (UDP 161) -> Agent على الجهاز -> بيقرا/بيكتب في MIB (OID) -> رد لـ NMS. باستقلالية: Agent بيكتشف حدث -> Trap/Inform (UDP 162) -> NMS.",
+  "best_practices": [
+    "فضّل SNMPv3 على SNMPv2c كل ما كان مدعوم، لأن الـ Community Strings بتتبعت كنص واضح."
+  ],
+  "security_notes": [
+    "الـ Community Strings في SNMPv2c هي فعليًا كلمة سر مشتركة نص واضح ولازم تتعامل معاها كبيانات اعتماد حقيقية، مش تسمية افتراضية زي 'public'."
+  ],
+  "interview_questions": [
+    "إيه الفرق بين SNMP Trap وInform؟",
+    "ليه SNMPv3 بيتعتبر أأمن من SNMPv2c؟",
+    "إيه اللي متخزن جوا الـ MIB؟"
+  ],
+  "exam_traps": [
+    "الخلط بين أرقام المنافذ — الـ Agent بيسمع على 161، والـ Manager بيسمع لـ Trap/Inform على 162.",
+    "الاعتقاد إن SNMPv2c آمن لأنه 'شكله' زي تسجيل دخول — الـ Community Strings نص واضح."
+  ],
+  "enterprise_notes": [
+    "الـ SNMP هو العمود الفقري لمعظم لوحات NMS المؤسسية، وعادةً بيترافق مع Syslog وNTP لمراقبة كاملة."
+  ],
+  "config_examples_title": []
+}

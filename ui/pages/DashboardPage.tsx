@@ -1,16 +1,13 @@
 // ui/pages/DashboardPage.tsx
-// Workspace landing page — replaces "drop straight into a random topic" as
-// the default view. Structure ported from HLOS's learner dashboard
-// (app/dashboard/page.tsx): a single "next best action" hero, a 3-card
-// stats row (accuracy ring, domain-mastery radar, topics-covered ring),
-// then a recent-activity feed. Everything here reads real attempt-log data
-// (via ui/lib/analytics.ts) — an empty state shows for a first-time user
-// instead of fabricated numbers.
+// Workspace landing page — structure ported from HLOS's learner dashboard.
+// Fully bilingual via useLanguage(); topic ids and domain internals stay
+// as technical keys, everything the learner reads goes through t().
 
 import React, { useMemo } from "react";
 import * as reviewEngine from "../../engines/review-engine";
 import { getCurrentUserId } from "../../services/current-user";
 import { domainOf } from "../layout/domains";
+import { useLanguage } from "../i18n/LanguageContext";
 import {
   getOverallAccuracy,
   getDomainMastery,
@@ -28,13 +25,14 @@ export interface DashboardPageProps {
 }
 
 const ENGINE_CARDS = [
-  { id: "question-bank", title: "Question bank", desc: "Type-in-the-answer drills, per topic", emoji: "📝" },
-  { id: "exam", title: "Exam simulator", desc: "Timed, domain-weighted full run", emoji: "⏱️" },
-  { id: "troubleshooting", title: "Scenario simulator", desc: "Multi-topic diagnostic chains", emoji: "🧩" },
-  { id: "review", title: "Review dashboard", desc: "Spaced repetition queue", emoji: "🔁" },
+  { id: "question-bank", emoji: "📝" },
+  { id: "exam", emoji: "⏱️" },
+  { id: "troubleshooting", emoji: "🧩" },
+  { id: "review", emoji: "🔁" },
 ];
 
 export default function DashboardPage({ topicIds, onSelectTopic, onSelectEngine }: DashboardPageProps) {
+  const { t } = useLanguage();
   const userId = useMemo(() => getCurrentUserId(), []);
   const dueCount = useMemo(() => reviewEngine.getDueReviews(userId).length, [userId]);
   const accuracy = useMemo(() => getOverallAccuracy(userId), [userId]);
@@ -45,7 +43,7 @@ export default function DashboardPage({ topicIds, onSelectTopic, onSelectEngine 
   const hasActivity = accuracy !== null;
   const weakestDomain = [...mastery].sort((a, b) => a.score - b.score)[0];
   const weakestDomainTopic = weakestDomain
-    ? topicIds.find((t) => domainOf(t) === weakestDomain.domain)
+    ? topicIds.find((tid) => domainOf(tid) === weakestDomain.domain)
     : undefined;
 
   const startPracticing = () => {
@@ -57,78 +55,74 @@ export default function DashboardPage({ topicIds, onSelectTopic, onSelectEngine 
     }
   };
 
+  const heroTitle =
+    dueCount > 0
+      ? t("dashboard.heroTitleDue", { count: dueCount })
+      : hasActivity && weakestDomain
+      ? t("dashboard.heroTitleWeak", { domain: t(`common.domains.${weakestDomain.domain}`) })
+      : t("dashboard.heroTitleStart");
+
+  const heroBody =
+    dueCount > 0 ? t("dashboard.heroBodyDue") : hasActivity ? t("dashboard.heroBodyWeak") : t("dashboard.heroBodyStart");
+
+  const formatRelative = (r: { unit: "now" | "m" | "h" | "d"; n: number }) =>
+    r.unit === "now" ? t("dashboard.time.justNow") : t(`dashboard.time.${r.unit === "m" ? "minutesAgo" : r.unit === "h" ? "hoursAgo" : "daysAgo"}`, { n: r.n });
+
   return (
     <div className="ccna-anim-fade-up">
       <header style={S.header}>
-        <h1 style={S.h1}>CCNA workspace</h1>
-        <p style={S.subtitle}>200-301 practice lab · {topicIds.length} topics loaded</p>
+        <h1 style={S.h1}>{t("common.appName")}</h1>
+        <p style={S.subtitle}>{t("dashboard.subtitle", { count: topicIds.length })}</p>
       </header>
 
       {/* Next best action */}
       <div style={S.hero} className="ccna-hoverable">
         <div style={S.heroIcon}>🎯</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={S.heroKicker}>Next best step</p>
-          <h2 style={S.heroTitle}>
-            {dueCount > 0
-              ? `${dueCount} question${dueCount === 1 ? "" : "s"} are due for review`
-              : hasActivity && weakestDomain
-              ? `Your weakest area right now: ${weakestDomain.label}`
-              : "Start with NAT — it's the most cross-referenced topic in the exam"}
-          </h2>
-          <p style={S.heroBody}>
-            {dueCount > 0
-              ? "Spaced repetition works best when you clear the queue regularly."
-              : hasActivity
-              ? "A quick Question Bank run here will move the needle the most."
-              : "Answer a few questions to start building your mastery picture."}
-          </p>
+          <p style={S.heroKicker}>{t("dashboard.heroKicker")}</p>
+          <h2 style={S.heroTitle}>{heroTitle}</h2>
+          <p style={S.heroBody}>{heroBody}</p>
         </div>
-        <button
-          type="button"
-          className="ccna-hoverable ccna-press"
-          style={S.heroBtn}
-          onClick={startPracticing}
-        >
-          {dueCount > 0 ? "Go to review" : "Start practicing"}
+        <button type="button" className="ccna-hoverable ccna-press" style={S.heroBtn} onClick={startPracticing}>
+          {dueCount > 0 ? t("dashboard.goToReview") : t("dashboard.startPracticing")}
         </button>
       </div>
 
       {/* Stats row */}
       <div style={S.statsGrid}>
         <div style={S.statCard} className="ccna-hoverable">
-          <p style={S.statLabel}>Overall accuracy</p>
+          <p style={S.statLabel}>{t("dashboard.overallAccuracy")}</p>
           {hasActivity ? (
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <ProgressRing value={accuracy!} size={72} strokeWidth={7} />
               <div>
                 <div style={S.statBig}>{accuracy}%</div>
-                <div style={S.statMeta}>across all attempts</div>
+                <div style={S.statMeta}>{t("dashboard.acrossAllAttempts")}</div>
               </div>
             </div>
           ) : (
-            <EmptyMiniState text="No attempts yet" />
+            <EmptyMiniState text={t("dashboard.noAttemptsYet")} />
           )}
         </div>
 
         <div style={{ ...S.statCard, alignItems: "center", display: "flex", flexDirection: "column" }} className="ccna-hoverable">
-          <p style={{ ...S.statLabel, alignSelf: "flex-start" }}>Mastery by domain</p>
+          <p style={{ ...S.statLabel, alignSelf: "flex-start" }}>{t("dashboard.masteryByDomain")}</p>
           {mastery.length >= 3 ? (
-            <RadarChart data={mastery.map((m) => ({ label: m.label, score: m.score }))} size={168} showLabels={false} />
+            <RadarChart data={mastery.map((m) => ({ label: t(`common.domains.${m.domain}`), score: m.score }))} size={168} showLabels={false} />
           ) : (
-            <EmptyMiniState text="Answer questions across a few domains to unlock the radar" />
+            <EmptyMiniState text={t("dashboard.unlockRadarHint")} />
           )}
         </div>
 
         <div style={S.statCard} className="ccna-hoverable">
-          <p style={S.statLabel}>Topics covered</p>
+          <p style={S.statLabel}>{t("dashboard.topicsCovered")}</p>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <ProgressRing value={(engaged.size / topicIds.length) * 100} size={72} strokeWidth={7} />
             <div>
               <div style={S.statBig}>
                 {engaged.size}/{topicIds.length}
               </div>
-              <div style={S.statMeta}>attempted at least once</div>
+              <div style={S.statMeta}>{t("dashboard.attemptedAtLeastOnce")}</div>
             </div>
           </div>
         </div>
@@ -136,26 +130,19 @@ export default function DashboardPage({ topicIds, onSelectTopic, onSelectEngine 
 
       {/* Recent activity */}
       <section style={S.section}>
-        <h3 style={S.sectionTitle}>Recent activity</h3>
+        <h3 style={S.sectionTitle}>{t("dashboard.recentActivity")}</h3>
         {recent.length === 0 ? (
-          <p style={S.muted}>
-            Nothing yet — answer a question in the Question Bank and it'll show up here.
-          </p>
+          <p style={S.muted}>{t("dashboard.noActivityYet")}</p>
         ) : (
           <div style={S.activityList}>
             {recent.map((a, i) => (
               <div key={a.question_id + a.timestamp + i} style={S.activityRow}>
                 <span style={{ ...S.activityDot, background: a.correct ? "var(--difficulty-easy)" : "var(--difficulty-hard)" }} />
-                <button
-                  type="button"
-                  onClick={() => onSelectTopic(a.topic_id)}
-                  style={S.activityTopicBtn}
-                  className="ccna-hoverable"
-                >
+                <button type="button" onClick={() => onSelectTopic(a.topic_id)} style={S.activityTopicBtn} className="ccna-hoverable">
                   {a.topic_id.toUpperCase()}
                 </button>
-                <span style={S.activityText}>{a.correct ? "answered correctly" : "missed"}</span>
-                <span style={S.activityTime}>{relativeTime(a.timestamp)}</span>
+                <span style={S.activityText}>{a.correct ? t("dashboard.answeredCorrectly") : t("dashboard.missed")}</span>
+                <span style={S.activityTime}>{formatRelative(relativeTime(a.timestamp))}</span>
               </div>
             ))}
           </div>
@@ -164,7 +151,7 @@ export default function DashboardPage({ topicIds, onSelectTopic, onSelectEngine 
 
       {/* Engine quick links */}
       <section style={S.section}>
-        <h3 style={S.sectionTitle}>Jump into an engine</h3>
+        <h3 style={S.sectionTitle}>{t("dashboard.jumpIntoEngine")}</h3>
         <div style={S.engineGrid}>
           {ENGINE_CARDS.map((e) => (
             <button
@@ -175,8 +162,16 @@ export default function DashboardPage({ topicIds, onSelectTopic, onSelectEngine 
               className="ccna-hoverable ccna-press"
             >
               <span style={S.engineEmoji}>{e.emoji}</span>
-              <span style={S.engineTitle}>{e.title}</span>
-              <span style={S.engineDesc}>{e.desc}</span>
+              <span style={S.engineTitle}>
+                {e.id === "question-bank"
+                  ? t("common.questionBank")
+                  : e.id === "exam"
+                  ? t("common.examSimulator")
+                  : e.id === "troubleshooting"
+                  ? t("common.scenarioSimulator")
+                  : t("common.reviewDashboard")}
+              </span>
+              <span style={S.engineDesc}>{t(`dashboard.engineDesc.${e.id}`)}</span>
             </button>
           ))}
         </div>
@@ -231,11 +226,11 @@ const S: Record<string, React.CSSProperties> = {
   activityRow: { display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8, background: "var(--card-bg)", border: "1px solid var(--border)", fontSize: 12.5 },
   activityDot: { width: 7, height: 7, borderRadius: "50%", flexShrink: 0 },
   activityTopic: { fontWeight: 700, color: "var(--text-secondary)", width: 100, flexShrink: 0 },
-  activityTopicBtn: { fontWeight: 700, color: "var(--accent-text)", width: 100, flexShrink: 0, background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer", fontSize: "inherit", fontFamily: "inherit" },
+  activityTopicBtn: { fontWeight: 700, color: "var(--accent-text)", width: 100, flexShrink: 0, background: "none", border: "none", padding: 0, textAlign: "start", cursor: "pointer", fontSize: "inherit", fontFamily: "inherit" },
   activityText: { color: "var(--text-secondary)", flex: 1 },
   activityTime: { color: "var(--text-muted)", fontSize: 11.5 },
   engineGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 },
-  engineCard: { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, padding: "14px 16px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--card-bg)", cursor: "pointer", textAlign: "left" },
+  engineCard: { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, padding: "14px 16px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--card-bg)", cursor: "pointer", textAlign: "start" },
   engineEmoji: { fontSize: 20 },
   engineTitle: { fontSize: 13.5, fontWeight: 700, color: "var(--text-primary)" },
   engineDesc: { fontSize: 11.5, color: "var(--text-muted)" },

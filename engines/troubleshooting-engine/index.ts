@@ -8,6 +8,7 @@
 // Vite's import.meta.glob, eager, so templates are available synchronously.
 
 import type { ScenarioTemplate } from "../knowledge-engine/types";
+import type { Lang } from "../../ui/i18n/LanguageContext";
 
 const templateModules = import.meta.glob<{ default: unknown }>(
   "./scenario-templates/*.json",
@@ -29,13 +30,25 @@ function loadTemplates(): Map<string, ScenarioTemplate> {
   return map;
 }
 
-export function generateScenario(templateId: string): ScenarioTemplate {
+// Swaps in the _ar fields when present, falling back to English per-field —
+// same merge contract as knowledge-engine/localization.ts.
+function localize(t: ScenarioTemplate, lang: Lang): ScenarioTemplate {
+  if (lang === "en") return t;
+  return {
+    ...t,
+    symptom_text: t.symptom_text_ar ?? t.symptom_text,
+    hidden_root_cause: t.hidden_root_cause_ar ?? t.hidden_root_cause,
+    expected_diagnostic_order: t.expected_diagnostic_order_ar ?? t.expected_diagnostic_order,
+  };
+}
+
+export function generateScenario(templateId: string, lang: Lang = "en"): ScenarioTemplate {
   const templates = loadTemplates();
   const scenario = templates.get(templateId);
   if (!scenario) {
     throw new Error(`Unknown scenario template_id: ${templateId}`);
   }
-  return scenario;
+  return localize(scenario, lang);
 }
 
 export function listAvailableTemplates(): string[] {
@@ -45,15 +58,15 @@ export function listAvailableTemplates(): string[] {
 // Convenience for the UI: full template objects (not just ids), grouped by
 // which topics they touch, so a Scenario Simulator page can show a picker
 // without a second round-trip per template.
-export function listAvailableScenarios(): ScenarioTemplate[] {
-  return [...loadTemplates().values()];
+export function listAvailableScenarios(lang: Lang = "en"): ScenarioTemplate[] {
+  return [...loadTemplates().values()].map((t) => localize(t, lang));
 }
 
 // Picks a scenario at random (deterministic-ish via a caller-supplied seed
 // so "New scenario" buttons don't repeat within a session if the caller
 // increments the seed each click).
-export function pickRandomScenario(seed = Date.now()): ScenarioTemplate {
-  const all = listAvailableScenarios();
+export function pickRandomScenario(seed = Date.now(), lang: Lang = "en"): ScenarioTemplate {
+  const all = listAvailableScenarios(lang);
   if (all.length === 0) throw new Error("No scenario templates available");
   const idx = Math.abs(seed) % all.length;
   return all[idx];

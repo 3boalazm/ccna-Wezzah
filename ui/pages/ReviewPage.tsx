@@ -1,8 +1,10 @@
 // ui/pages/ReviewPage.tsx
 // Review Dashboard — surfaces the spaced-repetition forecast from
-// review-engine.getReviewForecast(). Since attempts now get recorded by
+// review-engine.getReviewForecast(). Since attempts get recorded by
 // QuestionBankPage and ExamPage, this fills up naturally as the learner
-// actually studies (nothing here is fabricated / seeded).
+// actually studies (nothing here is fabricated / seeded). Fully bilingual
+// via useLanguage(); domain labels resolve through t("common.domains.*")
+// rather than the engine's own English DOMAIN_LABELS.
 
 import React, { useMemo, useState } from "react";
 import * as reviewEngine from "../../engines/review-engine";
@@ -10,8 +12,10 @@ import * as adaptiveEngine from "../../engines/adaptive-engine";
 import { getCurrentUserId } from "../../services/current-user";
 import { getDomainMastery } from "../lib/analytics";
 import RadarChart from "../components/RadarChart";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export default function ReviewPage() {
+  const { t } = useLanguage();
   const userId = useMemo(() => getCurrentUserId(), []);
   const [refreshTick, setRefreshTick] = useState(0);
 
@@ -37,12 +41,8 @@ export default function ReviewPage() {
   if (forecast.length === 0) {
     return (
       <div style={S.empty} className="ccna-anim-fade-up">
-        <div style={S.emptyBadge}>📭 Nothing to review yet</div>
-        <p style={S.muted}>
-          The Review Engine schedules questions using spaced repetition, but it needs at least one
-          answered question to work with. Answer a few questions in the Question Bank or Exam
-          Simulator, then come back here.
-        </p>
+        <div style={S.emptyBadge}>{t("review.emptyBadge")}</div>
+        <p style={S.muted}>{t("review.emptyBody")}</p>
       </div>
     );
   }
@@ -50,39 +50,36 @@ export default function ReviewPage() {
   return (
     <div style={S.page} className="ccna-anim-fade-up">
       <header style={S.header}>
-        <div style={S.badge}>🔁 Review dashboard</div>
-        <h1 style={S.title}>Spaced-repetition queue</h1>
-        <p style={S.subtitle}>
-          {due.length} question{due.length === 1 ? "" : "s"} due right now, out of{" "}
-          {forecast.length} tracked.
-        </p>
+        <div style={S.badge}>{t("review.badge")}</div>
+        <h1 style={S.title}>{t("review.title")}</h1>
+        <p style={S.subtitle}>{t("review.subtitle", { due: due.length, total: forecast.length })}</p>
       </header>
 
       <div style={S.statsRow}>
-        <StatCard label="Due now" value={due.length} tone="due" />
-        <StatCard label="Scheduled" value={forecast.length - due.length} tone="scheduled" />
-        <StatCard label="Topics tracked" value={topicsSeen.length} tone="topics" />
+        <StatCard label={t("review.dueNow")} value={due.length} tone="due" />
+        <StatCard label={t("review.scheduled")} value={forecast.length - due.length} tone="scheduled" />
+        <StatCard label={t("review.topicsTracked")} value={topicsSeen.length} tone="topics" />
       </div>
 
       {mastery.length >= 3 && (
         <section style={{ ...S.section, textAlign: "center" }}>
-          <h2 style={{ ...S.h2, textAlign: "left" }}>Mastery by domain</h2>
+          <h2 style={{ ...S.h2, textAlign: "start" }}>{t("dashboard.masteryByDomain")}</h2>
           <div style={S.radarWrap}>
-            <RadarChart data={mastery.map((m) => ({ label: m.label, score: m.score }))} size={240} />
+            <RadarChart data={mastery.map((m) => ({ label: t(`common.domains.${m.domain}`), score: m.score }))} size={240} />
           </div>
         </section>
       )}
 
       {due.length > 0 && (
         <section style={S.section}>
-          <h2 style={S.h2}>Due now</h2>
+          <h2 style={S.h2}>{t("review.dueNow")}</h2>
           <div style={S.list}>
             {due.map((item) => (
               <div key={item.question_id} style={S.dueRow} className="ccna-anim-fade-up">
                 <span style={S.dueDot} />
-                <span style={S.dueTopic}>{item.topic_id.toUpperCase()}</span>
-                <span style={S.dueId}>{item.question_id}</span>
-                <span style={S.dueStreak}>streak {item.streak}</span>
+                <span style={S.dueTopic} dir="ltr">{item.topic_id.toUpperCase()}</span>
+                <span style={S.dueId} dir="ltr">{item.question_id}</span>
+                <span style={S.dueStreak}>{t("review.streak", { n: item.streak })}</span>
               </div>
             ))}
           </div>
@@ -91,15 +88,13 @@ export default function ReviewPage() {
 
       {upcoming.length > 0 && (
         <section style={S.section}>
-          <h2 style={S.h2}>Coming up</h2>
+          <h2 style={S.h2}>{t("review.comingUp")}</h2>
           <div style={S.list}>
             {upcoming.map((item) => (
               <div key={item.question_id} style={S.upcomingRow}>
-                <span style={S.upcomingTopic}>{item.topic_id.toUpperCase()}</span>
-                <span style={S.dueId}>{item.question_id}</span>
-                <span style={S.upcomingDate}>
-                  due {new Date(item.due_at).toLocaleDateString()}
-                </span>
+                <span style={S.upcomingTopic} dir="ltr">{item.topic_id.toUpperCase()}</span>
+                <span style={S.dueId} dir="ltr">{item.question_id}</span>
+                <span style={S.upcomingDate}>{t("review.due", { date: new Date(item.due_at).toLocaleDateString() })}</span>
               </div>
             ))}
           </div>
@@ -107,20 +102,17 @@ export default function ReviewPage() {
       )}
 
       <section style={S.section}>
-        <h2 style={S.h2}>Difficulty signal per topic</h2>
-        <p style={S.hint}>
-          This is what the Adaptive Engine will hand the Question Bank as the next target
-          difficulty, once a topic has enough recent attempts.
-        </p>
+        <h2 style={S.h2}>{t("review.difficultySignal")}</h2>
+        <p style={S.hint}>{t("review.difficultyHint")}</p>
         <div style={S.list}>
           {signals.map((s) => (
             <div key={s.topic} style={S.signalRow}>
-              <span style={S.signalTopic}>{s.topic.toUpperCase()}</span>
+              <span style={S.signalTopic} dir="ltr">{s.topic.toUpperCase()}</span>
               <TargetBadge value={s.target} />
               <span style={S.signalMeta}>
                 {s.accuracy === null
-                  ? `${s.sampleSize} attempt${s.sampleSize === 1 ? "" : "s"} — not enough yet`
-                  : `${Math.round(s.accuracy * 100)}% over last ${s.sampleSize}`}
+                  ? t("review.attemptsNotEnough", { n: s.sampleSize })
+                  : t("review.accuracyOverLast", { pct: Math.round(s.accuracy * 100), n: s.sampleSize })}
               </span>
             </div>
           ))}
@@ -132,7 +124,7 @@ export default function ReviewPage() {
         className="ccna-hoverable ccna-press"
         onClick={() => setRefreshTick((t) => t + 1)}
       >
-        ↻ Refresh
+        {t("review.refresh")}
       </button>
     </div>
   );
@@ -153,8 +145,9 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone: 
 }
 
 function TargetBadge({ value }: { value: "Easy" | "Medium" | "Hard" }) {
+  const { t } = useLanguage();
   const color = value === "Hard" ? "var(--difficulty-hard)" : value === "Medium" ? "var(--difficulty-medium)" : "var(--difficulty-easy)";
-  return <span style={{ ...S.targetBadge, background: color }}>{value}</span>;
+  return <span style={{ ...S.targetBadge, background: color }}>{t(`common.difficulty.${value}`)}</span>;
 }
 
 const S: Record<string, React.CSSProperties> = {
@@ -179,10 +172,10 @@ const S: Record<string, React.CSSProperties> = {
   dueStreak: { color: "var(--text-muted)", fontSize: 12 },
   upcomingRow: { display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: "var(--card-bg)", border: "1px solid var(--border, #E3E2DC)", fontSize: 13 },
   upcomingTopic: { fontWeight: 700, color: "var(--text-secondary)", width: 90 },
-  upcomingDate: { color: "var(--text-muted)", fontSize: 12, marginLeft: "auto" },
+  upcomingDate: { color: "var(--text-muted)", fontSize: 12, marginInlineStart: "auto" },
   signalRow: { display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: "var(--card-bg)", border: "1px solid var(--border, #E3E2DC)", fontSize: 13 },
   signalTopic: { fontWeight: 700, color: "var(--text-secondary)", width: 90 },
-  signalMeta: { color: "var(--text-muted)", fontSize: 12, marginLeft: "auto" },
+  signalMeta: { color: "var(--text-muted)", fontSize: 12, marginInlineStart: "auto" },
   targetBadge: { color: "#fff", padding: "2px 9px", borderRadius: 999, fontSize: 11, fontWeight: 700 },
   refreshBtn: { padding: "8px 16px", borderRadius: 999, border: "1px solid var(--border, #E3E2DC)", background: "var(--card-bg)", fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
   empty: { padding: "60px 20px", textAlign: "center" },

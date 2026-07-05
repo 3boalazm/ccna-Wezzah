@@ -17,6 +17,7 @@ import QuestionBankPage from "../pages/QuestionBankPage";
 import ExamPage from "../pages/ExamPage";
 import ScenarioPage from "../pages/ScenarioPage";
 import ReviewPage from "../pages/ReviewPage";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const DOMAIN_ACCENT: Record<string, string> = {
   routing: "var(--domain-routing)",
@@ -43,6 +44,7 @@ export default function WorkspaceLayout({
   onSelectTopic,
   children,
 }: WorkspaceLayoutProps) {
+  const { t } = useLanguage();
   const [view, setView] = useState<View>("home");
   const [activeEngine, setActiveEngine] = useState<string | undefined>(undefined);
   const [focusMode, setFocusMode] = useState(false);
@@ -90,7 +92,7 @@ export default function WorkspaceLayout({
     return (
       <div style={S.focusShell}>
         <button type="button" onClick={goHome} className="ccna-hoverable ccna-press" style={S.focusExit}>
-          ← Exit
+          {t("common.exit")}
         </button>
         <div style={S.focusContent} className="ccna-anim-fade-up">
           {mainContent}
@@ -143,7 +145,7 @@ const S: Record<string, React.CSSProperties> = {
   focusExit: {
     position: "fixed",
     top: 14,
-    left: 14,
+    insetInlineStart: 14,
     zIndex: 20,
     padding: "7px 14px",
     borderRadius: 999,

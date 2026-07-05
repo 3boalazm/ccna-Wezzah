@@ -1,6 +1,9 @@
 {
   "template_id": "dhcp_snooping_blocks_legit_server",
-  "topics_involved": ["dhcp", "dhcp_snooping_dai"],
+  "topics_involved": [
+    "dhcp",
+    "dhcp_snooping_dai"
+  ],
   "symptom_text": "DHCP Snooping was just enabled on the access switch in the technical department. Suddenly all users stop getting IP addresses, even though the DHCP server is working perfectly and connected to port GigabitEthernet0/1.",
   "hidden_root_cause": "The server-facing port (Gi0/1) was never marked as 'ip dhcp snooping trust' — the switch is dropping the server's own Offer/Ack messages because it treats that port as untrusted by default.",
   "expected_diagnostic_order": [
@@ -8,5 +11,13 @@
     "Check DHCP Snooping port trust state on the server-facing interface.",
     "Apply 'ip dhcp snooping trust' on the correct port and re-test.",
     "Follow-up question: if DAI is enabled later without DHCP Snooping active, will it function? (No — DAI depends entirely on the DHCP Snooping binding table.)"
+  ],
+  "symptom_text_ar": "DHCP Snooping اتفعّل لسه على سويتش الوصول في القسم التقني. فجأة كل المستخدمين وقفوا ياخدوا عناوين IP، رغم إن سيرفر DHCP شغال تمام ومتصل بمنفذ GigabitEthernet0/1.",
+  "hidden_root_cause_ar": "المنفذ المواجه للسيرفر (Gi0/1) معملوش 'ip dhcp snooping trust' خالص — السويتش بيسقط رسائل Offer/Ack بتاعة السيرفر نفسه لأنه بيعامل المنفذ ده كغير موثوق افتراضيًا.",
+  "expected_diagnostic_order_ar": [
+    "تأكد إن سيرفر DHCP نفسه شغال وقابل للوصول.",
+    "افحص حالة الثقة لمنفذ DHCP Snooping على الواجهة المواجهة للسيرفر.",
+    "طبّق 'ip dhcp snooping trust' على المنفذ الصح وأعد الاختبار.",
+    "سؤال متابعة: لو DAI اتفعّل بعد كده من غير ما DHCP Snooping يكون شغال، هل هيشتغل؟ (لأ — الـ DAI معتمد كليًا على جدول ربط DHCP Snooping.)"
   ]
 }

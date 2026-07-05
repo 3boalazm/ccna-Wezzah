@@ -4,6 +4,7 @@
 
 import type { KnowledgeModule } from "./types";
 import { getAllCachedTopics, getCachedTopic, getRelations, loadKnowledgeBase } from "./loader";
+import { getLocalizedTopic as localize } from "./localization";
 
 export async function init(): Promise<void> {
   await loadKnowledgeBase();
@@ -13,6 +14,13 @@ export function getTopic(topicId: string): KnowledgeModule {
   const topic = getCachedTopic(topicId);
   if (!topic) throw new Error(`Unknown topic_id: ${topicId}`);
   return topic;
+}
+
+// Arabic-content-aware variant. lang="en" (or a topic with no Arabic
+// overlay yet) returns the exact same object as getTopic() — this is a
+// pure content overlay, not a second copy of the engine's logic.
+export function getLocalizedTopic(topicId: string, lang: "ar" | "en"): KnowledgeModule {
+  return localize(getTopic(topicId), lang);
 }
 
 export function getField<K extends keyof KnowledgeModule>(

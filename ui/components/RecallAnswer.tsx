@@ -1,17 +1,12 @@
 // ui/components/RecallAnswer.tsx
-// The actual input box for free-recall question formats — previously
-// "command-completion" had NO interactive element at all (just the prompt
-// and a Skip button), and "fill-blank" only offered a blind reveal with no
-// place to type anything first. This component fixes both: the learner
-// always types their answer before seeing anything, then either gets an
-// auto-checked verdict (command-completion, compared leniently against
-// placeholders) or a manual self-grade (fill-blank / interview-style
-// prompts, which the knowledge base intentionally stores no fixed answer
-// for) — with a manual override always available either way, since exact
-// string matching against CLI syntax is a convenience, not a verdict.
+// The actual input box for free-recall question formats. Fully bilingual
+// via useLanguage(); the comparison logic (isCloseMatch) is language-
+// agnostic since it only ever runs against English CLI command syntax
+// (commands are technical terms and are never translated).
 
 import React, { useState } from "react";
 import { isCloseMatch } from "../lib/grading";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export interface RecallState {
   typed: string;
@@ -26,6 +21,7 @@ export interface RecallAnswerProps {
 }
 
 export default function RecallAnswer({ correctAnswer, state, onSubmit, onGrade }: RecallAnswerProps) {
+  const { t } = useLanguage();
   const [draft, setDraft] = useState("");
 
   if (!state) {
@@ -39,13 +35,13 @@ export default function RecallAnswer({ correctAnswer, state, onSubmit, onGrade }
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder={correctAnswer ? "Type the IOS command…" : "Type your answer…"}
+          placeholder={correctAnswer ? t("recallAnswer.typeCommand") : t("recallAnswer.typeAnswer")}
           rows={correctAnswer ? 2 : 3}
           style={S.textarea}
           autoFocus
         />
         <button type="submit" style={S.submitBtn} className="ccna-hoverable ccna-press" disabled={!draft.trim()}>
-          Check my answer
+          {t("recallAnswer.checkAnswer")}
         </button>
       </form>
     );
@@ -57,55 +53,39 @@ export default function RecallAnswer({ correctAnswer, state, onSubmit, onGrade }
   return (
     <div>
       <div style={S.answerBlock}>
-        <span style={S.answerLabel}>Your answer</span>
+        <span style={S.answerLabel}>{t("recallAnswer.yourAnswer")}</span>
         <pre style={correctAnswer ? S.answerCode : S.answerText}>{state.typed}</pre>
       </div>
 
       {correctAnswer && (
         <div style={S.answerBlock}>
-          <span style={S.answerLabel}>Correct answer</span>
-          <pre style={S.answerCode}>{correctAnswer}</pre>
+          <span style={S.answerLabel}>{t("recallAnswer.correctAnswer")}</span>
+          <pre style={S.answerCode} dir="ltr">{correctAnswer}</pre>
         </div>
       )}
 
-      {!correctAnswer && !verdictKnown && (
-        <div style={S.hintBox}>
-          This is a recall prompt — the knowledge base intentionally stores no fixed answer for
-          interview-style questions. Compare your answer to what you actually know, then grade
-          yourself honestly.
-        </div>
-      )}
+      {!correctAnswer && !verdictKnown && <div style={S.hintBox}>{t("recallAnswer.hint")}</div>}
 
       {correctAnswer && !verdictKnown && (
         <div style={{ ...S.hintBox, ...(autoMatched ? S.hintBoxGood : S.hintBoxWarn) }}>
-          {autoMatched
-            ? "Looks like a match — confirm below."
-            : "Doesn't match exactly (placeholders like [name] count as a wildcard). If your command was still functionally correct, mark it right yourself."}
+          {autoMatched ? t("recallAnswer.matchGood") : t("recallAnswer.matchWarn")}
         </div>
       )}
 
       {!verdictKnown && (
         <div style={S.selfGradeRow}>
-          <button
-            style={S.knewBtn}
-            className="ccna-hoverable ccna-press"
-            onClick={() => onGrade(true)}
-          >
-            {correctAnswer ? "Mark correct" : "I knew this"}
+          <button style={S.knewBtn} className="ccna-hoverable ccna-press" onClick={() => onGrade(true)}>
+            {correctAnswer ? t("recallAnswer.markCorrect") : t("recallAnswer.iKnewThis")}
           </button>
-          <button
-            style={S.didntBtn}
-            className="ccna-hoverable ccna-press"
-            onClick={() => onGrade(false)}
-          >
-            {correctAnswer ? "Mark incorrect" : "I didn't know this"}
+          <button style={S.didntBtn} className="ccna-hoverable ccna-press" onClick={() => onGrade(false)}>
+            {correctAnswer ? t("recallAnswer.markIncorrect") : t("recallAnswer.iDidntKnowThis")}
           </button>
         </div>
       )}
 
       {verdictKnown && (
         <div style={{ ...S.verdictBadge, ...(state.correct ? S.verdictGood : S.verdictBad) }}>
-          {state.correct ? "✓ Marked correct" : "✕ Marked incorrect"}
+          {state.correct ? t("recallAnswer.markedCorrect") : t("recallAnswer.markedIncorrect")}
         </div>
       )}
     </div>
@@ -138,11 +118,11 @@ const S: Record<string, React.CSSProperties> = {
   },
   answerBlock: { marginBottom: 10 },
   answerLabel: { display: "block", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.4, color: "var(--text-muted)", marginBottom: 4 },
-  answerCode: { margin: 0, padding: "9px 11px", background: "var(--hover-bg)", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--text-primary)", whiteSpace: "pre-wrap", wordBreak: "break-word" },
+  answerCode: { margin: 0, padding: "9px 11px", background: "var(--hover-bg)", borderRadius: 8, fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--text-primary)", whiteSpace: "pre-wrap", wordBreak: "break-word", textAlign: "start" },
   answerText: { margin: 0, padding: "9px 11px", background: "var(--hover-bg)", borderRadius: 8, fontFamily: "var(--font-ui)", fontSize: 14, color: "var(--text-primary)", whiteSpace: "pre-wrap", wordBreak: "break-word" },
-  hintBox: { padding: "10px 12px", background: "var(--accent-bg)", borderLeft: "3px solid var(--accent)", borderRadius: "0 8px 8px 0", fontSize: 13.5, color: "var(--text-secondary)", marginBottom: 10 },
-  hintBoxGood: { background: "rgba(46,125,50,0.10)", borderLeftColor: "var(--difficulty-easy)" },
-  hintBoxWarn: { background: "var(--warning-bg)", borderLeftColor: "var(--warning)" },
+  hintBox: { padding: "10px 12px", background: "var(--accent-bg)", borderInlineStart: "3px solid var(--accent)", borderRadius: 8, fontSize: 13.5, color: "var(--text-secondary)", marginBottom: 10 },
+  hintBoxGood: { background: "rgba(46,125,50,0.10)", borderInlineStartColor: "var(--difficulty-easy)" },
+  hintBoxWarn: { background: "var(--warning-bg)", borderInlineStartColor: "var(--warning)" },
   selfGradeRow: { display: "flex", gap: 8, marginTop: 4 },
   knewBtn: { flex: 1, padding: 9, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", border: "1px solid var(--difficulty-easy)", background: "rgba(46,125,50,0.10)", color: "var(--difficulty-easy)" },
   didntBtn: { flex: 1, padding: 9, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", border: "1px solid var(--difficulty-hard)", background: "var(--danger-bg)", color: "var(--difficulty-hard)" },

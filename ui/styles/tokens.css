@@ -10,6 +10,7 @@
 */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
 
 :root {
   /* ─── LIGHT MODE — ported from HLOS's locked design system ──────────── */
@@ -115,6 +116,20 @@ body {
   background: var(--ws-bg);
   color: var(--text-primary);
   transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* ─── RTL (Arabic) ───────────────────────────────────────────────────────
+   The site defaults to Arabic (see ui/i18n/LanguageContext.tsx), which
+   sets dir="rtl" on <html>. Redefining --font-ui here means every existing
+   `fontFamily: "var(--font-ui)"` reference across the codebase switches to
+   Cairo automatically — no per-component font changes needed. Flexbox rows
+   (Sidebar/main split, nav items) already reverse correctly under dir=rtl
+   for free; the handful of *physical* left/right values that don't
+   auto-flip (fixed-position buttons, absolute-positioned icons) are
+   corrected explicitly below rather than left mirrored incorrectly. */
+
+[dir="rtl"] {
+  --font-ui: "Cairo", "Tajawal", "Segoe UI", Tahoma, sans-serif;
 }
 
 /* ─── Motion — small, purposeful liveliness ─────────────────────────────

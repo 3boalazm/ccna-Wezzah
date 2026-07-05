@@ -1,16 +1,17 @@
 // ui/layout/Sidebar.tsx
 // Desktop workspace navigation — visual language ported from the HLOS
-// "learner" shell (Ahmed's own product) at his request: brand mark square,
-// role/workspace identity block, search + theme-toggle icon buttons in the
-// header row, uppercase tracked section labels ("Topics" / "Engines"),
-// and an active-item treatment of tinted background + accent-colored side
-// border instead of a flat highlight. Hidden below 860px in favor of
-// MobileNav's floating glass pill (see ui/layout/MobileNav.tsx).
+// "learner" shell at Ahmed's request. Fully bilingual: all chrome text
+// goes through t(), and directional styles use CSS logical properties
+// (inline-start/end, "start" text-align) instead of physical left/right so
+// the whole nav mirrors correctly under RTL with zero special-casing —
+// flexbox rows already reverse for free under dir="rtl".
 
 import React, { useMemo, useState } from "react";
-import { groupByDomain, DOMAIN_LABELS, domainOf, type Domain } from "./domains";
+import { groupByDomain, domainOf, type Domain } from "./domains";
 import { SearchIcon } from "../components/icons";
 import ThemeToggle from "../components/ThemeToggle";
+import LanguageToggle from "../components/LanguageToggle";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export interface SidebarProps {
   topicIds: string[];
@@ -21,13 +22,6 @@ export interface SidebarProps {
   isHomeActive?: boolean;
   onGoHome?: () => void;
 }
-
-const ENGINE_ITEMS = [
-  { id: "question-bank", label: "Question bank" },
-  { id: "exam", label: "Exam simulator" },
-  { id: "troubleshooting", label: "Scenario simulator" },
-  { id: "review", label: "Review dashboard" },
-];
 
 const DOMAIN_DOT: Record<Domain, string> = {
   routing: "var(--domain-routing)",
@@ -48,8 +42,16 @@ export default function Sidebar({
   isHomeActive,
   onGoHome,
 }: SidebarProps) {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useState<Partial<Record<Domain, boolean>>>({});
+
+  const ENGINE_ITEMS = [
+    { id: "question-bank", label: t("common.questionBank") },
+    { id: "exam", label: t("common.examSimulator") },
+    { id: "troubleshooting", label: t("common.scenarioSimulator") },
+    { id: "review", label: t("common.reviewDashboard") },
+  ];
 
   const filtered = useMemo(
     () =>
@@ -65,7 +67,7 @@ export default function Sidebar({
     setCollapsed((prev) => ({ ...prev, [d]: !prev[d] }));
 
   return (
-    <aside className="ccna-desktop-sidebar" style={S.sidebar} aria-label="Workspace navigation">
+    <aside className="ccna-desktop-sidebar" style={S.sidebar} aria-label={t("common.appName")}>
       {/* Brand row */}
       <div style={S.brandRow}>
         <button
@@ -73,16 +75,19 @@ export default function Sidebar({
           onClick={onGoHome}
           style={S.brandMarkBtn}
           className="ccna-hoverable ccna-press"
-          aria-label="Go to dashboard"
-          title="Dashboard"
+          aria-label={t("common.goToDashboard")}
+          title={t("common.dashboard")}
         >
           C
         </button>
         <div style={S.brandText}>
-          <p style={S.brandTitle}>CCNA workspace</p>
-          <p style={S.brandSubtitle}>200-301 · practice lab</p>
+          <p style={S.brandTitle}>{t("common.appName")}</p>
+          <p style={S.brandSubtitle}>{t("common.appTagline")}</p>
         </div>
-        <ThemeToggle />
+        <div style={S.headerBtns}>
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </div>
 
       <div style={S.searchRow}>
@@ -91,9 +96,9 @@ export default function Sidebar({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search topics"
+          placeholder={t("common.searchTopics")}
           style={S.search}
-          aria-label="Search topics"
+          aria-label={t("common.searchTopics")}
         />
       </div>
 
@@ -103,13 +108,13 @@ export default function Sidebar({
           onClick={onGoHome}
           aria-current={isHomeActive ? "page" : undefined}
           className="ccna-transition-all"
-          style={{ ...S.item, paddingLeft: 8, marginBottom: 10, ...(isHomeActive ? S.itemActive : null) }}
+          style={{ ...S.item, paddingInlineStart: 8, marginBottom: 10, ...(isHomeActive ? S.itemActive : null) }}
         >
           <span aria-hidden="true">🏠</span>
-          Dashboard
+          {t("common.dashboard")}
         </button>
 
-        <div style={S.sectionLabel}>Topics</div>
+        <div style={S.sectionLabel}>{t("common.topics")}</div>
         <div style={S.tree}>
           {groups.map(({ domain, topics }) => (
             <div key={domain}>
@@ -120,26 +125,26 @@ export default function Sidebar({
                 aria-expanded={!collapsed[domain]}
               >
                 <span style={S.chevron}>{collapsed[domain] ? "\u203A" : "\u2304"}</span>
-                {DOMAIN_LABELS[domain]}
+                {t(`common.domains.${domain}`)}
               </button>
               {!collapsed[domain] && (
                 <div>
-                  {topics.map((t) => {
-                    const active = t === activeTopicId;
+                  {topics.map((tid) => {
+                    const active = tid === activeTopicId;
                     return (
                       <button
-                        key={t}
+                        key={tid}
                         type="button"
-                        onClick={() => onSelectTopic(t)}
+                        onClick={() => onSelectTopic(tid)}
                         aria-current={active ? "page" : undefined}
                         className="ccna-transition-all"
                         style={{ ...S.item, ...(active ? S.itemActive : null) }}
                       >
                         <span
-                          style={{ ...S.dot, background: DOMAIN_DOT[domainOf(t)] }}
+                          style={{ ...S.dot, background: DOMAIN_DOT[domainOf(tid)] }}
                           aria-hidden="true"
                         />
-                        {t.toUpperCase()}
+                        {tid.toUpperCase()}
                       </button>
                     );
                   })}
@@ -147,10 +152,10 @@ export default function Sidebar({
               )}
             </div>
           ))}
-          {groups.length === 0 && <div style={S.empty}>No topics match "{query}".</div>}
+          {groups.length === 0 && <div style={S.empty}>{t("common.noTopicsMatch", { query })}</div>}
         </div>
 
-        <div style={S.sectionLabel}>Engines</div>
+        <div style={S.sectionLabel}>{t("common.engines")}</div>
         <div style={S.tree}>
           {ENGINE_ITEMS.map((e) => {
             const active = e.id === activeEngine;
@@ -178,7 +183,7 @@ const S: Record<string, React.CSSProperties> = {
     width: "var(--sidebar-width)",
     minWidth: "var(--sidebar-width)",
     background: "var(--sidebar-bg)",
-    borderRight: "1px solid var(--border)",
+    borderInlineEnd: "1px solid var(--border)",
     height: "100vh",
     position: "sticky",
     top: 0,
@@ -196,6 +201,7 @@ const S: Record<string, React.CSSProperties> = {
     marginBottom: 12,
     borderBottom: "1px solid var(--border)",
   },
+  headerBtns: { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 },
   brandMarkBtn: {
     width: 34,
     height: 34,
@@ -215,11 +221,12 @@ const S: Record<string, React.CSSProperties> = {
   brandTitle: { margin: 0, fontSize: 13, fontWeight: 600, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   brandSubtitle: { margin: 0, fontSize: 10.5, color: "var(--text-muted)" },
   searchRow: { position: "relative", marginBottom: 16 },
-  searchIcon: { position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" },
+  searchIcon: { position: "absolute", insetInlineStart: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" },
   search: {
     width: "100%",
     boxSizing: "border-box",
-    padding: "7px 10px 7px 30px",
+    padding: "7px 10px",
+    paddingInlineStart: 30,
     fontSize: 13,
     border: "1px solid var(--border)",
     borderRadius: "var(--radius)",
@@ -241,7 +248,7 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 6,
     width: "100%",
-    textAlign: "left",
+    textAlign: "start",
     padding: "6px 8px",
     fontSize: 12.5,
     fontWeight: 600,
@@ -257,22 +264,23 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 8,
     width: "100%",
-    textAlign: "left",
-    padding: "7px 8px 7px 25px",
+    textAlign: "start",
+    padding: "7px 8px",
+    paddingInlineStart: 25,
     fontSize: 13,
     fontWeight: 500,
     color: "var(--text-secondary)",
     background: "transparent",
     border: "none",
-    borderLeft: "2px solid transparent",
-    borderRadius: "0 var(--radius) var(--radius) 0",
+    borderInlineStart: "2px solid transparent",
+    borderRadius: "var(--radius)",
     cursor: "pointer",
   },
   itemActive: {
     background: "var(--accent-bg)",
     color: "var(--accent-text)",
     fontWeight: 600,
-    borderLeft: "2px solid var(--accent)",
+    borderInlineStart: "2px solid var(--accent)",
   },
   dot: { width: 7, height: 7, borderRadius: "50%", flexShrink: 0 },
   empty: { padding: "8px", fontSize: 12.5, color: "var(--text-muted)" },

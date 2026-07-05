@@ -8,6 +8,7 @@
 import * as questionEngine from "../question-engine";
 import * as knowledgeEngine from "../knowledge-engine";
 import type { QuestionItem } from "../knowledge-engine/types";
+import type { Lang } from "../../ui/i18n/LanguageContext";
 import defaultBlueprintJson from "./blueprints/default.json";
 
 export interface ExamBlueprint {
@@ -24,7 +25,7 @@ export interface ExamSession {
 
 export const defaultBlueprint: ExamBlueprint = defaultBlueprintJson as ExamBlueprint;
 
-export function generateExam(blueprint: ExamBlueprint): ExamSession {
+export function generateExam(blueprint: ExamBlueprint, lang: Lang = "en"): ExamSession {
   // 1. Only weight topics whose knowledge module is actually loaded — a
   //    blueprint may reference topics that don't have source content yet
   //    (mirrors how question-engine degrades gracefully for relations.json).
@@ -49,7 +50,7 @@ export function generateExam(blueprint: ExamBlueprint): ExamSession {
     const share = weight / weightSum;
     const quota = Math.max(1, Math.round(blueprint.total_questions * share));
     const pool = shuffle(
-      questionEngine.generateQuestionSet({ topicId, depth: 0 }),
+      questionEngine.generateQuestionSet({ topicId, depth: 0, lang }),
       hashSeed(topicId)
     );
 
@@ -67,7 +68,7 @@ export function generateExam(blueprint: ExamBlueprint): ExamSession {
   //    back a short exam.
   if (selected.length < blueprint.total_questions) {
     for (const [topicId] of loadedWeights) {
-      const pool = questionEngine.generateQuestionSet({ topicId, depth: 0 });
+      const pool = questionEngine.generateQuestionSet({ topicId, depth: 0, lang });
       for (const q of pool) {
         if (selected.length >= blueprint.total_questions) break;
         if (seen.has(q.id)) continue;

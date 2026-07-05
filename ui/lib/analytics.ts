@@ -57,13 +57,18 @@ export function getTopicsEngaged(userId: string): Set<string> {
   return new Set(history.map((a) => a.topic_id));
 }
 
-export function relativeTime(iso: string): string {
+export interface RelativeTime {
+  unit: "now" | "m" | "h" | "d";
+  n: number;
+}
+
+export function relativeTime(iso: string): RelativeTime {
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.round(diffMs / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return { unit: "now", n: 0 };
+  if (mins < 60) return { unit: "m", n: mins };
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return { unit: "h", n: hours };
   const days = Math.round(hours / 24);
-  return `${days}d ago`;
+  return { unit: "d", n: days };
 }

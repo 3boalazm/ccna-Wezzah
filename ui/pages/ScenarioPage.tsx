@@ -16,6 +16,7 @@
 
 import React, { useMemo, useState } from "react";
 import * as troubleshootingEngine from "../../engines/troubleshooting-engine";
+import { useLanguage } from "../i18n/LanguageContext";
 import type { ScenarioTemplate } from "../../engines/knowledge-engine/types";
 
 export interface ScenarioPageProps {
@@ -25,12 +26,13 @@ export interface ScenarioPageProps {
 type Phase = "catalog" | "briefing" | "play" | "summary";
 
 export default function ScenarioPage({ onFocusChange }: ScenarioPageProps) {
-  const scenarios = useMemo(() => troubleshootingEngine.listAvailableScenarios(), []);
+  const { t, lang } = useLanguage();
+  const scenarios = useMemo(() => troubleshootingEngine.listAvailableScenarios(lang), [lang]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("catalog");
   const [revealed, setRevealed] = useState(0);
 
-  const active: ScenarioTemplate | null = activeId ? troubleshootingEngine.generateScenario(activeId) : null;
+  const active: ScenarioTemplate | null = activeId ? troubleshootingEngine.generateScenario(activeId, lang) : null;
 
   const openBriefing = (id: string) => {
     setActiveId(id);
@@ -46,18 +48,15 @@ export default function ScenarioPage({ onFocusChange }: ScenarioPageProps) {
   };
 
   const pickRandom = () => {
-    const s = troubleshootingEngine.pickRandomScenario(Date.now());
+    const s = troubleshootingEngine.pickRandomScenario(Date.now(), lang);
     openBriefing(s.template_id);
   };
 
   if (scenarios.length === 0) {
     return (
       <div style={S.empty}>
-        <strong>No scenario templates found.</strong>
-        <p style={S.muted}>
-          Add JSON files under engines/troubleshooting-engine/scenario-templates/ to populate this
-          page.
-        </p>
+        <strong>{t("scenario.noTemplates")}</strong>
+        <p style={S.muted}>{t("scenario.noTemplatesBody")}</p>
       </div>
     );
   }
@@ -67,15 +66,12 @@ export default function ScenarioPage({ onFocusChange }: ScenarioPageProps) {
     return (
       <div style={S.page} className="ccna-anim-fade-up">
         <header style={S.header}>
-          <div style={S.badge}>🧩 Scenario simulator</div>
-          <h1 style={S.title}>Multi-topic troubleshooting scenarios</h1>
-          <p style={S.subtitle}>
-            Real diagnostic chains pulled straight from the source material's own worked examples.
-            Pick one below, or let the simulator choose.
-          </p>
+          <div style={S.badge}>{t("scenario.badge")}</div>
+          <h1 style={S.title}>{t("scenario.title")}</h1>
+          <p style={S.subtitle}>{t("scenario.subtitle")}</p>
         </header>
         <button style={S.randomBtn} className="ccna-hoverable ccna-press" onClick={pickRandom}>
-          🎲 Surprise me
+          {t("scenario.surpriseMe")}
         </button>
         <div style={S.grid}>
           {scenarios.map((s) => (
@@ -86,15 +82,15 @@ export default function ScenarioPage({ onFocusChange }: ScenarioPageProps) {
               className="ccna-hoverable ccna-press"
               onClick={() => openBriefing(s.template_id)}
             >
-              <div style={S.chips}>
-                {s.topics_involved.map((t) => (
-                  <span key={t} style={S.chip}>
-                    {t.toUpperCase()}
+              <div style={S.chips} dir="ltr">
+                {s.topics_involved.map((topicId) => (
+                  <span key={topicId} style={S.chip}>
+                    {topicId.toUpperCase()}
                   </span>
                 ))}
               </div>
               <p style={S.scenarioText}>{s.symptom_text}</p>
-              <span style={S.stepCount}>{s.expected_diagnostic_order.length} diagnostic steps</span>
+              <span style={S.stepCount}>{t("scenario.diagnosticSteps", { n: s.expected_diagnostic_order.length })}</span>
             </button>
           ))}
         </div>
@@ -108,27 +104,27 @@ export default function ScenarioPage({ onFocusChange }: ScenarioPageProps) {
       <div style={S.darkPage}>
         <div style={S.darkWrap}>
         <button onClick={backToCatalog} style={S.darkBack} className="ccna-press">
-          ← All scenarios
+          {t("scenario.allScenarios")}
         </button>
-        <div style={S.kicker}>MISSION BRIEFING</div>
-        <div style={S.chipsRow}>
-          {active.topics_involved.map((t) => (
-            <span key={t} style={S.darkChip}>
-              {t.toUpperCase()}
+        <div style={S.kicker}>{t("scenario.missionBriefing")}</div>
+        <div style={S.chipsRow} dir="ltr">
+          {active.topics_involved.map((topicId) => (
+            <span key={topicId} style={S.darkChip}>
+              {topicId.toUpperCase()}
             </span>
           ))}
         </div>
-        <p style={S.darkLabel}>Situation</p>
+        <p style={S.darkLabel}>{t("scenario.situation")}</p>
         <p style={S.darkParagraph}>{active.symptom_text}</p>
 
         <div style={S.darkDivider} />
 
-        <p style={S.darkLabel}>Diagnostic objectives</p>
+        <p style={S.darkLabel}>{t("scenario.diagnosticObjectives")}</p>
         <div style={{ marginBottom: 28 }}>
           {active.expected_diagnostic_order.map((_, i) => (
             <div key={i} style={S.objectiveRow}>
               <span style={S.objectiveNum}>{i + 1}</span>
-              <p style={S.objectiveText}>Diagnostic step {i + 1} — revealed during the run</p>
+              <p style={S.objectiveText}>{t("scenario.diagnosticStepPlaceholder", { n: i + 1 })}</p>
             </div>
           ))}
         </div>
@@ -139,11 +135,9 @@ export default function ScenarioPage({ onFocusChange }: ScenarioPageProps) {
           className="ccna-hoverable ccna-press"
           onClick={() => setPhase("play")}
         >
-          Start scenario
+          {t("scenario.startScenario")}
         </button>
-        <span style={S.darkMeta}>
-          {active.expected_diagnostic_order.length} decisions · root cause hidden until the end
-        </span>
+        <span style={S.darkMeta}>{t("scenario.decisionsMeta", { n: active.expected_diagnostic_order.length })}</span>
         </div>
       </div>
     );
@@ -157,8 +151,7 @@ export default function ScenarioPage({ onFocusChange }: ScenarioPageProps) {
         <div style={S.darkWrap}>
         <div style={S.stepBar}>
           <span style={S.stepBarLabel}>
-            Step {Math.min(revealed + 1, active.expected_diagnostic_order.length)} of{" "}
-            {active.expected_diagnostic_order.length}
+            {t("scenario.stepOf", { n: Math.min(revealed + 1, active.expected_diagnostic_order.length), total: active.expected_diagnostic_order.length })}
           </span>
           <div style={S.dotsRow}>
             {active.expected_diagnostic_order.map((_, i) => (
@@ -168,11 +161,11 @@ export default function ScenarioPage({ onFocusChange }: ScenarioPageProps) {
         </div>
 
         <div style={S.glassCard}>
-          <p style={S.darkLabel}>Situation</p>
+          <p style={S.darkLabel}>{t("scenario.situation")}</p>
           <p style={S.darkParagraph}>{active.symptom_text}</p>
         </div>
 
-        <p style={S.darkLabel}>Your diagnostic path</p>
+        <p style={S.darkLabel}>{t("scenario.yourDiagnosticPath")}</p>
         <div style={{ marginBottom: 20 }}>
           {active.expected_diagnostic_order.slice(0, revealed).map((step, i) => (
             <div key={i} style={S.glassStep} className="ccna-anim-fade-up">
@@ -184,11 +177,11 @@ export default function ScenarioPage({ onFocusChange }: ScenarioPageProps) {
 
         {!allRevealed ? (
           <button type="button" style={S.darkCta} className="ccna-hoverable ccna-press" onClick={() => setRevealed((r) => r + 1)}>
-            Reveal next diagnostic step
+            {t("scenario.revealNextStep")}
           </button>
         ) : (
           <button type="button" style={S.darkCta} className="ccna-hoverable ccna-press" onClick={() => setPhase("summary")}>
-            Continue to debrief →
+            {t("scenario.continueToDebrief")}
           </button>
         )}
         </div>
@@ -200,24 +193,24 @@ export default function ScenarioPage({ onFocusChange }: ScenarioPageProps) {
   return (
     <div style={S.darkPage}>
       <div style={S.darkWrap}>
-      <div style={S.kicker}>SCENARIO COMPLETE</div>
+      <div style={S.kicker}>{t("scenario.scenarioComplete")}</div>
       <div style={{ ...S.glassCard, textAlign: "center", padding: "32px 28px" }} className="ccna-anim-pop">
         <div style={S.summaryEmoji}>✅</div>
-        <p style={S.summaryHeadline}>{active.expected_diagnostic_order.length} of {active.expected_diagnostic_order.length} steps completed</p>
-        <p style={S.darkMeta}>Topics: {active.topics_involved.map((t) => t.toUpperCase()).join(", ")}</p>
+        <p style={S.summaryHeadline}>{t("scenario.stepsCompleted", { n: active.expected_diagnostic_order.length, total: active.expected_diagnostic_order.length })}</p>
+        <p style={S.darkMeta} dir="ltr">{t("scenario.topicsLabel", { topics: active.topics_involved.map((topicId) => topicId.toUpperCase()).join(", ") })}</p>
       </div>
 
-      <p style={S.darkLabel}>Root cause</p>
+      <p style={S.darkLabel}>{t("scenario.rootCause")}</p>
       <div style={S.glassCard}>
         <p style={S.darkParagraph}>{active.hidden_root_cause}</p>
       </div>
 
       <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
         <button type="button" style={S.darkCtaOutline} className="ccna-hoverable ccna-press" onClick={() => { setRevealed(0); setPhase("play"); }}>
-          Replay this scenario
+          {t("scenario.replayScenario")}
         </button>
         <button type="button" style={S.darkCta} className="ccna-hoverable ccna-press" onClick={backToCatalog}>
-          Back to catalog
+          {t("scenario.backToCatalog")}
         </button>
       </div>
       </div>
@@ -234,7 +227,7 @@ const S: Record<string, React.CSSProperties> = {
   subtitle: { fontSize: 14.5, color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 560 },
   randomBtn: { padding: "9px 18px", borderRadius: 999, border: "1px solid var(--accent)", background: "var(--accent-bg)", color: "var(--accent-text)", fontSize: 13.5, fontWeight: 700, cursor: "pointer", marginBottom: 20 },
   grid: { display: "grid", gridTemplateColumns: "1fr", gap: 12 },
-  scenarioCard: { textAlign: "left", padding: "16px 18px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--card-bg)", cursor: "pointer" },
+  scenarioCard: { textAlign: "start", padding: "16px 18px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--card-bg)", cursor: "pointer" },
   chips: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 },
   chip: { background: "var(--accent-bg)", color: "var(--accent-text)", padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700 },
   scenarioText: { fontSize: 14.5, color: "var(--text-primary)", margin: "0 0 8px", lineHeight: 1.5 },

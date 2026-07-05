@@ -1,16 +1,16 @@
 // ui/layout/MobileNav.tsx
 // Floating glass pill nav for mobile (< 860px) — ported from the HLOS
-// "learner" shell's MobileNav pattern at Ahmed's request: a centered fixed
-// pill (brand orb · workspace identity · search · theme · ☰) that expands
-// into a glass panel below itself with the full grouped nav, closing on
-// selection or on outside tap. Rendered alongside <Sidebar/> in
-// WorkspaceLayout; each is shown/hidden by the other via the
-// .ccna-desktop-sidebar / .ccna-mobile-pill-nav CSS classes in tokens.css.
+// "learner" shell's MobileNav pattern. Fully bilingual via useLanguage();
+// the pill itself is centered/symmetric so it needs no directional fixes,
+// but the search icon and panel item indentation use logical properties
+// so they still read correctly under RTL.
 
 import React, { useEffect, useMemo, useState } from "react";
-import { groupByDomain, DOMAIN_LABELS, domainOf, type Domain } from "./domains";
+import { groupByDomain, domainOf, type Domain } from "./domains";
 import { SearchIcon, MenuIcon, CloseIcon } from "../components/icons";
 import ThemeToggle from "../components/ThemeToggle";
+import LanguageToggle from "../components/LanguageToggle";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export interface MobileNavProps {
   topicIds: string[];
@@ -21,13 +21,6 @@ export interface MobileNavProps {
   isHomeActive?: boolean;
   onGoHome?: () => void;
 }
-
-const ENGINE_ITEMS = [
-  { id: "question-bank", label: "Question bank" },
-  { id: "exam", label: "Exam simulator" },
-  { id: "troubleshooting", label: "Scenario simulator" },
-  { id: "review", label: "Review dashboard" },
-];
 
 const DOMAIN_DOT: Record<Domain, string> = {
   routing: "var(--domain-routing)",
@@ -48,9 +41,17 @@ export default function MobileNav({
   isHomeActive,
   onGoHome,
 }: MobileNavProps) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+
+  const ENGINE_ITEMS = [
+    { id: "question-bank", label: t("common.questionBank") },
+    { id: "exam", label: t("common.examSimulator") },
+    { id: "troubleshooting", label: t("common.scenarioSimulator") },
+    { id: "review", label: t("common.reviewDashboard") },
+  ];
 
   // Close whenever the active selection changes elsewhere.
   useEffect(() => setOpen(false), [activeTopicId, activeEngine, isHomeActive]);
@@ -71,29 +72,30 @@ export default function MobileNav({
     <div style={S.wrap} className="ccna-mobile-pill-nav">
       {/* Pill */}
       <div style={{ ...S.pill, ...(open ? S.pillOpen : null) }} className="ccna-glass">
-        <button type="button" onClick={onGoHome} style={S.orbBtn} className="ccna-press" aria-label="Go to dashboard">
+        <button type="button" onClick={onGoHome} style={S.orbBtn} className="ccna-press" aria-label={t("common.goToDashboard")}>
           C
         </button>
         <div style={S.identity}>
-          <p style={S.identityTitle}>CCNA workspace</p>
-          <p style={S.identitySubtitle}>{activeEngine ?? (isHomeActive ? "Dashboard" : activeTopicId.toUpperCase())}</p>
+          <p style={S.identityTitle}>{t("common.appName")}</p>
+          <p style={S.identitySubtitle}>{activeEngine ?? (isHomeActive ? t("common.dashboard") : activeTopicId.toUpperCase())}</p>
         </div>
         <button
           type="button"
           onClick={() => setSearchOpen((v) => !v)}
-          aria-label="Search topics"
+          aria-label={t("common.searchTopics")}
           style={S.iconBtn}
           className="ccna-press"
         >
           <SearchIcon size={15} />
         </button>
+        <LanguageToggle style={{ width: 30, height: 30, minWidth: 30, borderRadius: 999, border: "none", background: "transparent" }} />
         <ThemeToggle style={{ width: 30, height: 30, borderRadius: 999, border: "none", background: "transparent" }} />
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="ccna-mobile-menu"
-          aria-label={open ? "Close menu" : "Open menu"}
+          aria-label={open ? t("common.exit") : t("common.engines")}
           style={{ ...S.iconBtn, ...(open ? S.iconBtnActive : null) }}
           className="ccna-press"
         >
@@ -108,7 +110,7 @@ export default function MobileNav({
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search topics…"
+            placeholder={t("common.searchTopicsEllipsis")}
             style={S.searchInput}
           />
         </div>
@@ -121,7 +123,7 @@ export default function MobileNav({
 
       {/* Panel */}
       {open && (
-        <nav id="ccna-mobile-menu" aria-label="Main navigation" style={S.panel} className="ccna-glass ccna-anim-fade-up">
+        <nav id="ccna-mobile-menu" aria-label={t("common.appName")} style={S.panel} className="ccna-glass ccna-anim-fade-up">
           <button
             type="button"
             onClick={onGoHome}
@@ -129,21 +131,21 @@ export default function MobileNav({
             style={{ ...S.panelItem, marginBottom: 6, ...(isHomeActive ? S.panelItemActive : null) }}
           >
             <span aria-hidden="true">🏠</span>
-            Dashboard
+            {t("common.dashboard")}
           </button>
 
-          <p style={S.panelLabel}>Topics</p>
+          <p style={S.panelLabel}>{t("common.topics")}</p>
           <div style={S.panelList}>
             {groups.map(({ domain, topics }) => (
               <div key={domain} style={S.domainBlock}>
-                <p style={S.domainLabel}>{DOMAIN_LABELS[domain]}</p>
-                {topics.map((t) => {
-                  const active = t === activeTopicId;
+                <p style={S.domainLabel}>{t(`common.domains.${domain}`)}</p>
+                {topics.map((tid) => {
+                  const active = tid === activeTopicId;
                   return (
                     <button
-                      key={t}
+                      key={tid}
                       type="button"
-                      onClick={() => onSelectTopic(t)}
+                      onClick={() => onSelectTopic(tid)}
                       className="ccna-stagger-item"
                       style={{
                         ...S.panelItem,
@@ -151,8 +153,8 @@ export default function MobileNav({
                         animationDelay: nextDelay(),
                       }}
                     >
-                      <span style={{ ...S.dot, background: DOMAIN_DOT[domainOf(t)] }} />
-                      {t.toUpperCase()}
+                      <span style={{ ...S.dot, background: DOMAIN_DOT[domainOf(tid)] }} />
+                      {tid.toUpperCase()}
                     </button>
                   );
                 })}
@@ -160,7 +162,7 @@ export default function MobileNav({
             ))}
           </div>
 
-          <p style={S.panelLabel}>Engines</p>
+          <p style={S.panelLabel}>{t("common.engines")}</p>
           <div style={S.panelList}>
             {ENGINE_ITEMS.map((e) => {
               const active = e.id === activeEngine;
@@ -184,12 +186,12 @@ export default function MobileNav({
 }
 
 const S: Record<string, React.CSSProperties> = {
-  wrap: { position: "fixed", left: "50%", top: 10, transform: "translateX(-50%)", zIndex: 50, width: "calc(100vw - 24px)", maxWidth: 420 },
+  wrap: { position: "fixed", insetInlineStart: "50%", top: 10, transform: "translateX(-50%)", zIndex: 50, width: "calc(100vw - 24px)", maxWidth: 420 },
   pill: {
     display: "flex",
     alignItems: "center",
     gap: 8,
-    padding: "6px 8px 6px 12px",
+    padding: "6px 8px",
     borderRadius: "var(--radius-pill)",
     transition: "box-shadow 0.2s ease",
   },
@@ -252,7 +254,7 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 8,
     width: "100%",
-    textAlign: "left",
+    textAlign: "start",
     padding: "9px 10px",
     fontSize: 13.5,
     fontWeight: 500,

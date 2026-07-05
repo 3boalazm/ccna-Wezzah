@@ -1,15 +1,17 @@
 // ui/pages/ExamPage.tsx
-// Timed, full-length simulation built by the Exam Engine. Session view is
-// ported from HLOS's distraction-free assess/session screen (focus mode —
-// chrome hidden via onFocusChange, lettered A/B/C/D options, flag-for-
-// review). Results use the same "3-beat" staged reveal as HLOS's
-// assess/results page: score → domain bars → ranked weakest-domains list.
+// Timed, full-length simulation built by the Exam Engine. Focus-mode
+// session (chrome hidden via onFocusChange), lettered options, flag-for-
+// review, and a "3-beat" staged results reveal. Fully bilingual: chrome via
+// t(), exam questions come pre-localized from the Exam/Question Engine.
+// Command-derived MCQ options (q.id contains "cmdmcq") always render
+// dir="ltr" since their text IS a literal CLI command.
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as examEngine from "../../engines/exam-engine";
 import * as reviewEngine from "../../engines/review-engine";
 import { getCurrentUserId } from "../../services/current-user";
 import RecallAnswer from "../components/RecallAnswer";
+import { useLanguage } from "../i18n/LanguageContext";
 import type { ExamSession } from "../../engines/exam-engine";
 
 export interface ExamPageProps {
@@ -22,7 +24,8 @@ interface ExamAnswerState {
   correct: boolean | null; // null = typed but not yet graded (recall formats)
 }
 
-const LETTERS = ["A", "B", "C", "D", "E", "F"];
+const LETTERS_EN = ["A", "B", "C", "D", "E", "F"];
+const LETTERS_AR = ["أ", "ب", "ج", "د", "هـ", "و"];
 
 function masteryColor(score: number): string {
   if (score >= 70) return "var(--difficulty-easy)";
@@ -31,6 +34,8 @@ function masteryColor(score: number): string {
 }
 
 export default function ExamPage({ onFocusChange }: ExamPageProps) {
+  const { t, lang } = useLanguage();
+  const LETTERS = lang === "ar" ? LETTERS_AR : LETTERS_EN;
   const [session, setSession] = useState<ExamSession | null>(null);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, ExamAnswerState>>({});
@@ -41,7 +46,7 @@ export default function ExamPage({ onFocusChange }: ExamPageProps) {
   const timerRef = useRef<number | null>(null);
 
   const start = () => {
-    const s = examEngine.generateExam(examEngine.defaultBlueprint);
+    const s = examEngine.generateExam(examEngine.defaultBlueprint, lang);
     setSession(s);
     setIndex(0);
     setAnswers({});
@@ -101,16 +106,17 @@ export default function ExamPage({ onFocusChange }: ExamPageProps) {
   if (!session) {
     return (
       <div style={S.intro} className="ccna-anim-fade-up">
-        <div style={S.introBadge}>⏱️ Exam simulator</div>
-        <h1 style={S.introTitle}>Full-length timed CCNA simulation</h1>
+        <div style={S.introBadge}>{t("exam.badge")}</div>
+        <h1 style={S.introTitle}>{t("exam.introTitle")}</h1>
         <p style={S.introBody}>
-          {examEngine.defaultBlueprint.total_questions} questions across{" "}
-          {Object.keys(examEngine.defaultBlueprint.domain_weights).length} domains,{" "}
-          {examEngine.defaultBlueprint.time_limit_minutes} minutes on the clock. No penalty for
-          guessing — you can skip anything and come back later.
+          {t("exam.introBody", {
+            total: examEngine.defaultBlueprint.total_questions,
+            domains: Object.keys(examEngine.defaultBlueprint.domain_weights).length,
+            minutes: examEngine.defaultBlueprint.time_limit_minutes,
+          })}
         </p>
         <button style={S.startBtn} className="ccna-hoverable ccna-press" onClick={start}>
-          Start exam
+          {t("exam.startExam")}
         </button>
       </div>
     );
@@ -125,21 +131,26 @@ export default function ExamPage({ onFocusChange }: ExamPageProps) {
       <div style={S.finish}>
         <div style={{ ...S.beat, opacity: 1 }} className="ccna-anim-fade-up">
           <div style={S.finishBadge}>{pct >= 80 ? "🏆" : pct >= 50 ? "🙂" : "📚"}</div>
-          <h2 style={S.finishTitle}>Exam session finished</h2>
+          <h2 style={S.finishTitle}>{t("exam.examFinished")}</h2>
           <div style={S.bigScore} className="ccna-anim-pop">
             {pct}%
           </div>
           <p style={S.muted}>
-            {correctCount} correct out of {graded.length} answered ({session.questions.length} total,{" "}
-            {session.questions.length - graded.length} skipped, {flagged.size} flagged for review).
+            {t("exam.resultSummary", {
+              correct: correctCount,
+              answered: graded.length,
+              total: session.questions.length,
+              skipped: session.questions.length - graded.length,
+              flagged: flagged.size,
+            })}
           </p>
         </div>
 
         <div style={{ ...S.breakdown, opacity: beat >= 1 ? 1 : 0, transition: "opacity .4s" }}>
-          <p style={S.beatLabel}>Score by domain</p>
+          <p style={S.beatLabel}>{t("exam.scoreByDomain")}</p>
           {domainBreakdown.map((d, i) => (
             <div key={d.topic} style={{ ...S.breakdownRow, animationDelay: `${i * 60}ms` }} className={beat >= 1 ? "ccna-anim-fade-up" : undefined}>
-              <span style={S.breakdownTopic}>{d.topic.toUpperCase()}</span>
+              <span style={S.breakdownTopic} dir="ltr">{d.topic.toUpperCase()}</span>
               <div style={S.breakdownTrack}>
                 <div style={{ ...S.breakdownFill, width: `${d.pct}%`, background: masteryColor(d.pct) }} />
               </div>
@@ -153,12 +164,12 @@ export default function ExamPage({ onFocusChange }: ExamPageProps) {
         <div style={{ opacity: beat >= 2 ? 1 : 0, transform: beat >= 2 ? "translateY(0)" : "translateY(10px)", transition: "opacity .4s, transform .4s" }}>
           {weakest.length > 0 && (
             <>
-              <p style={{ ...S.beatLabel, marginTop: 22 }}>Focus next on</p>
+              <p style={{ ...S.beatLabel, marginTop: 22 }}>{t("exam.focusNextOn")}</p>
               <div style={S.weakList}>
                 {weakest.map((d, i) => (
                   <div key={d.topic} style={S.weakRow}>
                     <span style={{ ...S.weakRank, background: masteryColor(d.pct) }}>{i + 1}</span>
-                    <span style={S.weakTopic}>{d.topic.toUpperCase()}</span>
+                    <span style={S.weakTopic} dir="ltr">{d.topic.toUpperCase()}</span>
                     <span style={{ ...S.weakScore, color: masteryColor(d.pct) }}>{d.pct}%</span>
                   </div>
                 ))}
@@ -167,7 +178,7 @@ export default function ExamPage({ onFocusChange }: ExamPageProps) {
           )}
           <div style={{ textAlign: "center" }}>
             <button style={S.startBtn} className="ccna-hoverable ccna-press" onClick={start}>
-              Start a new exam
+              {t("exam.startNewExam")}
             </button>
           </div>
         </div>
@@ -177,6 +188,7 @@ export default function ExamPage({ onFocusChange }: ExamPageProps) {
 
   const q = session.questions[index];
   const state = answers[q.id];
+  const isCommandOption = q.id.includes("cmdmcq");
   const mm = Math.floor(secondsLeft / 60);
   const ss = secondsLeft % 60;
   const lowTime = secondsLeft < 300;
@@ -224,13 +236,11 @@ export default function ExamPage({ onFocusChange }: ExamPageProps) {
         <span style={S.scorePill}>
           {correctCount} / {graded.length}
         </span>
-        <span style={{ ...S.timer, color: lowTime ? "var(--difficulty-hard)" : "var(--text-primary)" }}>
+        <span style={{ ...S.timer, color: lowTime ? "var(--difficulty-hard)" : "var(--text-primary)" }} dir="ltr">
           {lowTime ? "⏰ " : "⏱ "}
           {mm}:{ss.toString().padStart(2, "0")}
         </span>
-        <span style={S.progressLabel}>
-          Question {index + 1} of {session.questions.length}
-        </span>
+        <span style={S.progressLabel}>{t("exam.questionOf", { n: index + 1, total: session.questions.length })}</span>
       </div>
       <div style={S.progressTrack}>
         <div style={{ ...S.progressFill, width: `${((index + 1) / session.questions.length) * 100}%` }} />
@@ -238,10 +248,10 @@ export default function ExamPage({ onFocusChange }: ExamPageProps) {
 
       <div key={q.id} style={S.card} className="ccna-anim-fade-up">
         <div style={S.qmeta}>
-          <span style={S.topicTag}>{q.source_topic.toUpperCase()}</span>
-          <span style={S.diffTag}>{q.difficulty}</span>
+          <span style={S.topicTag} dir="ltr">{q.source_topic.toUpperCase()}</span>
+          <span style={S.diffTag}>{t(`common.difficulty.${q.difficulty}`)}</span>
           <button type="button" onClick={toggleFlag} className="ccna-press" style={{ ...S.flagBtn, ...(isFlagged ? S.flagBtnActive : null) }}>
-            🚩 {isFlagged ? "Flagged" : "Flag"}
+            🚩 {isFlagged ? t("exam.flagged") : t("exam.flag")}
           </button>
         </div>
         <p style={S.prompt}>{q.prompt}</p>
@@ -268,6 +278,7 @@ export default function ExamPage({ onFocusChange }: ExamPageProps) {
                   onClick={() => answer(opt)}
                   style={style}
                   className={!state ? "ccna-hoverable ccna-press" : undefined}
+                  dir={isCommandOption ? "ltr" : undefined}
                 >
                   <span style={letterStyle}>{LETTERS[i]}</span>
                   {opt}
@@ -295,7 +306,7 @@ export default function ExamPage({ onFocusChange }: ExamPageProps) {
           disabled={index === 0}
           onClick={() => setIndex((i) => Math.max(0, i - 1))}
         >
-          Previous
+          {t("questionBank.previous")}
         </button>
         <button
           type="button"
@@ -303,7 +314,7 @@ export default function ExamPage({ onFocusChange }: ExamPageProps) {
           className="ccna-hoverable ccna-press"
           onClick={() => setIndex((i) => i + 1)}
         >
-          {index === session.questions.length - 1 ? "Finish" : state ? "Next" : "Skip"}
+          {index === session.questions.length - 1 ? t("exam.finish") : state ? t("questionBank.next") : t("questionBank.skip")}
         </button>
       </div>
     </div>
@@ -331,10 +342,10 @@ const S: Record<string, React.CSSProperties> = {
   qmeta: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10 },
   topicTag: { fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 999, textTransform: "uppercase", background: "var(--accent-bg)", color: "var(--accent-text)" },
   diffTag: { fontSize: 11, color: "var(--text-muted)" },
-  flagBtn: { marginLeft: "auto", fontSize: 11.5, color: "var(--text-muted)", background: "transparent", border: "1px solid var(--border)", borderRadius: 999, padding: "3px 10px", cursor: "pointer" },
+  flagBtn: { marginInlineStart: "auto", fontSize: 11.5, color: "var(--text-muted)", background: "transparent", border: "1px solid var(--border)", borderRadius: 999, padding: "3px 10px", cursor: "pointer" },
   flagBtnActive: { color: "var(--warning)", borderColor: "var(--warning)", background: "var(--warning-bg)", fontWeight: 700 },
-  prompt: { fontSize: 15.5, lineHeight: 1.5, margin: "0 0 14px" },
-  option: { display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", padding: "11px 14px", marginBottom: 8, border: "1px solid var(--border)", borderRadius: 8, background: "var(--card-bg)", fontSize: 14, cursor: "pointer", color: "var(--text-primary)" },
+  prompt: { fontSize: 15.5, lineHeight: 1.6, margin: "0 0 14px" },
+  option: { display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "start", padding: "11px 14px", marginBottom: 8, border: "1px solid var(--border)", borderRadius: 8, background: "var(--card-bg)", fontSize: 14, cursor: "pointer", color: "var(--text-primary)" },
   optionLetter: { width: 22, height: 22, borderRadius: "50%", border: "1.5px solid var(--border-strong)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", flexShrink: 0 },
   optionLetterCorrect: { borderColor: "var(--difficulty-easy)", background: "var(--difficulty-easy)", color: "#fff" },
   optionLetterWrong: { borderColor: "var(--difficulty-hard)", background: "var(--difficulty-hard)", color: "#fff" },
@@ -354,7 +365,7 @@ const S: Record<string, React.CSSProperties> = {
   breakdownTopic: { fontSize: 11, fontWeight: 700, width: 90, flexShrink: 0, color: "var(--text-secondary)" },
   breakdownTrack: { flex: 1, height: 6, borderRadius: 3, background: "var(--border)", overflow: "hidden" },
   breakdownFill: { height: "100%", transition: "width .5s ease" },
-  breakdownScore: { fontSize: 12, width: 40, textAlign: "right", fontWeight: 700 },
+  breakdownScore: { fontSize: 12, width: 40, textAlign: "end", fontWeight: 700, fontFamily: "var(--font-mono)" },
   weakList: { display: "flex", flexDirection: "column", gap: 6, marginBottom: 22 },
   weakRow: { display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: "var(--card-bg)", border: "1px solid var(--border)" },
   weakRank: { width: 20, height: 20, borderRadius: "50%", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },

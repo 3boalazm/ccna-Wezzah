@@ -1,11 +1,20 @@
 {
   "template_id": "port_security_errdisable",
-  "topics_involved": ["port_security"],
+  "topics_involved": [
+    "port_security"
+  ],
   "symptom_text": "A Finance department user reports they cannot connect to the network. Interface GigabitEthernet0/1 shows an err-disabled state; 'show port-security interface g0/1' shows Violation Mode = Shutdown and Security Violation Count = 1.",
   "hidden_root_cause": "An extra/unauthorized device (e.g. a small unmanaged switch) was connected to a port configured with 'switchport port-security maximum 1', triggering a violation under the default Shutdown mode.",
   "expected_diagnostic_order": [
     "Identify the offending MAC address (show port-security interface).",
     "Physically remove or reconfigure the extra device.",
     "Recover the port: 'shutdown' then 'no shutdown' (required specifically because violation mode is Shutdown — Restrict/Protect modes do not disable the port)."
+  ],
+  "symptom_text_ar": "مستخدم في قسم المالية بيبلّغ إنه مش قادر يتصل بالشبكة. الواجهة GigabitEthernet0/1 في حالة err-disabled؛ أمر 'show port-security interface g0/1' بيوري Violation Mode = Shutdown وSecurity Violation Count = 1.",
+  "hidden_root_cause_ar": "جهاز إضافي غير مصرح بيه (زي سويتش صغير غير مُدار) اتوصل بمنفذ متهيأ بـ 'switchport port-security maximum 1'، وده فعّل مخالفة تحت وضع Shutdown الافتراضي.",
+  "expected_diagnostic_order_ar": [
+    "حدد عنوان الـ MAC المخالف (show port-security interface).",
+    "افصل أو أعد تهيئة الجهاز الإضافي فيزيائيًا.",
+    "استرجع المنفذ: 'shutdown' وبعدين 'no shutdown' (مطلوب بالتحديد لأن وضع المخالفة هو Shutdown — أوضاع Restrict/Protect متقفلش المنفذ)."
   ]
 }

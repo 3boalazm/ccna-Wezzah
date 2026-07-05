@@ -71,6 +71,9 @@ export interface ScenarioTemplate {
   symptom_text: string;
   hidden_root_cause: string;
   expected_diagnostic_order: string[];
+  symptom_text_ar?: string;
+  hidden_root_cause_ar?: string;
+  expected_diagnostic_order_ar?: string[];
 }
 
 export interface QuestionItem {

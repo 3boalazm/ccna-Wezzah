@@ -8,6 +8,7 @@ import { createRoot } from "react-dom/client";
 import * as knowledgeEngine from "../engines/knowledge-engine";
 import TopicPage from "./pages/TopicPage";
 import WorkspaceLayout from "./layout/WorkspaceLayout";
+import { LanguageProvider } from "./i18n/LanguageContext";
 import "./styles/tokens.css";
 
 // The topics converted so far. Extend this list as more /knowledge/*.json
@@ -70,7 +71,9 @@ ${(e as Error).message}
 
   createRoot(el).render(
     <React.StrictMode>
-      <App />
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
     </React.StrictMode>
   );
 }

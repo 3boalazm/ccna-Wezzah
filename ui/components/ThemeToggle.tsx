@@ -7,6 +7,7 @@
 
 import React, { useEffect, useState } from "react";
 import { SunIcon, MoonIcon } from "./icons";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const STORAGE_KEY = "ccna-platform-theme";
 
@@ -18,6 +19,7 @@ function getInitialTheme(): "light" | "dark" {
 }
 
 export default function ThemeToggle({ style }: { style?: React.CSSProperties }) {
+  const { t } = useLanguage();
   const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
 
   useEffect(() => {
@@ -33,8 +35,8 @@ export default function ThemeToggle({ style }: { style?: React.CSSProperties }) 
     <button
       type="button"
       onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
+      title={theme === "dark" ? t("common.switchToLight") : t("common.switchToDark")}
       className="ccna-hoverable ccna-press"
       style={{ ...S.btn, ...style }}
     >
