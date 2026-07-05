@@ -15,6 +15,8 @@ export interface SidebarProps {
   onSelectTopic: (topicId: string) => void;
   activeEngine?: string;
   onSelectEngine?: (engineId: string) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 const ENGINE_ITEMS = [
@@ -40,6 +42,8 @@ export default function Sidebar({
   onSelectTopic,
   activeEngine,
   onSelectEngine,
+  isOpen = true,
+  onClose,
 }: SidebarProps) {
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useState<Partial<Record<Domain, boolean>>>({});
@@ -58,9 +62,24 @@ export default function Sidebar({
     setCollapsed((prev) => ({ ...prev, [d]: !prev[d] }));
 
   return (
-    <nav style={S.sidebar} aria-label="Workspace navigation">
+    <nav
+      style={S.sidebar}
+      className="ccna-sidebar"
+      data-open={isOpen}
+      aria-label="Workspace navigation"
+      aria-hidden={!isOpen}
+    >
       <div style={S.header}>
         <span style={S.workspaceName}>CCNA workspace</span>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close navigation"
+          style={S.closeBtn}
+          className="ccna-hamburger-btn ccna-press"
+        >
+          ✕
+        </button>
       </div>
 
       <input
@@ -91,7 +110,10 @@ export default function Sidebar({
                   <button
                     key={t}
                     type="button"
-                    onClick={() => onSelectTopic(t)}
+                    onClick={() => {
+                      onSelectTopic(t);
+                      onClose?.();
+                    }}
                     aria-current={t === activeTopicId ? "page" : undefined}
                     className="ccna-transition-all"
                     style={{
@@ -119,7 +141,10 @@ export default function Sidebar({
           <button
             key={e.id}
             type="button"
-            onClick={() => onSelectEngine?.(e.id)}
+            onClick={() => {
+              onSelectEngine?.(e.id);
+              onClose?.();
+            }}
             aria-current={e.id === activeEngine ? "page" : undefined}
             className="ccna-transition-all"
             style={{
@@ -147,8 +172,20 @@ const S: Record<string, React.CSSProperties> = {
     fontFamily: "var(--font-ui)",
     boxSizing: "border-box",
   },
-  header: { padding: "4px 8px 12px" },
+  header: { padding: "4px 8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" },
   workspaceName: { fontWeight: 600, fontSize: 14, color: "var(--text-primary)" },
+  closeBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    border: "1px solid var(--border)",
+    background: "var(--card-bg)",
+    color: "var(--text-secondary)",
+    fontSize: 13,
+    cursor: "pointer",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   search: {
     width: "100%",
     boxSizing: "border-box",

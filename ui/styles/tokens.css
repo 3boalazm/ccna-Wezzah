@@ -106,3 +106,56 @@
 .ccna-transition-all {
   transition: all 0.18s ease;
 }
+
+/* Mobile sidebar drawer ------------------------------------------------
+   Desktop: sidebar is a normal static-width column, hamburger/backdrop are
+   never shown. Below the breakpoint, the sidebar becomes a fixed,
+   off-canvas drawer that slides in from the left over a dimmed backdrop —
+   the hamburger button (shown only at this width) toggles it. */
+
+.ccna-hamburger-btn {
+  display: none;
+}
+
+.ccna-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .ccna-hamburger-btn {
+    display: inline-flex;
+  }
+
+  .ccna-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: none;
+  }
+
+  .ccna-sidebar[data-open="true"] {
+    transform: translateX(0);
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .ccna-sidebar-backdrop[data-open="true"] {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.32);
+    z-index: 30;
+    animation: ccna-fade-up 0.18s ease both;
+  }
+
+  .ccna-main-mobile {
+    width: 100%;
+  }
+
+  .ccna-main-mobile > div {
+    padding-top: 56px !important;
+  }
+}

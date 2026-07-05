@@ -40,6 +40,7 @@ export default function WorkspaceLayout({
   children,
 }: WorkspaceLayoutProps) {
   const [activeEngine, setActiveEngine] = useState<string | undefined>(undefined);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const accent = DOMAIN_ACCENT[domainOf(activeTopicId)];
 
   let mainContent: React.ReactNode;
@@ -57,6 +58,24 @@ export default function WorkspaceLayout({
 
   return (
     <div style={S.shell}>
+      <button
+        type="button"
+        onClick={() => setSidebarOpen(true)}
+        aria-label="Open navigation"
+        style={S.hamburgerBtn}
+        className="ccna-hamburger-btn ccna-press"
+      >
+        <span style={S.hamburgerLine} />
+        <span style={S.hamburgerLine} />
+        <span style={S.hamburgerLine} />
+      </button>
+
+      <div
+        className="ccna-sidebar-backdrop"
+        data-open={sidebarOpen}
+        onClick={() => setSidebarOpen(false)}
+      />
+
       <Sidebar
         topicIds={topicIds}
         activeTopicId={activeTopicId}
@@ -66,6 +85,8 @@ export default function WorkspaceLayout({
         }}
         activeEngine={activeEngine}
         onSelectEngine={setActiveEngine}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
       <main
         style={{
@@ -73,6 +94,7 @@ export default function WorkspaceLayout({
           borderTop: `3px solid ${activeEngine ? "var(--accent, #6C5CE7)" : accent}`,
           transition: "border-color 0.2s ease",
         }}
+        className="ccna-main-mobile"
       >
         <div key={activeEngine ?? activeTopicId} style={S.content} className="ccna-anim-fade-up">
           {mainContent}
@@ -84,6 +106,30 @@ export default function WorkspaceLayout({
 
 const S: Record<string, React.CSSProperties> = {
   shell: { display: "flex", minHeight: "100vh", background: "var(--ws-bg)" },
-  main: { flex: 1, overflowY: "auto" },
+  main: { flex: 1, overflowY: "auto", minWidth: 0 },
   content: { maxWidth: 860, margin: "0 auto", padding: "0 20px 80px" },
+  hamburgerBtn: {
+    position: "fixed",
+    top: 12,
+    left: 12,
+    zIndex: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    border: "1px solid var(--border)",
+    background: "var(--card-bg)",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    cursor: "pointer",
+  },
+  hamburgerLine: {
+    display: "block",
+    width: 16,
+    height: 2,
+    borderRadius: 1,
+    background: "var(--text-primary)",
+  },
 };
