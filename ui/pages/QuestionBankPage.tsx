@@ -9,6 +9,7 @@ import React, { useMemo, useState } from "react";
 import * as questionEngine from "../../engines/question-engine";
 import * as reviewEngine from "../../engines/review-engine";
 import { getCurrentUserId } from "../../services/current-user";
+import RecallAnswer from "../components/RecallAnswer";
 import type { QuestionItem } from "../../engines/knowledge-engine/types";
 
 export interface QuestionBankPageProps {
@@ -17,7 +18,8 @@ export interface QuestionBankPageProps {
 
 interface AnsweredState {
   picked?: string;
-  correct: boolean | null; // null = ungraded flashcard-style item
+  typed?: string;
+  correct: boolean | null; // null = typed but not yet graded
 }
 
 export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
@@ -88,20 +90,19 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
     });
   };
 
-  const revealFlashcard = () => {
-    setAnswers((prev) => ({ ...prev, [q.id]: { correct: null } }));
+  const submitTyped = (typed: string) => {
+    setAnswers((prev) => ({ ...prev, [q.id]: { typed, correct: null } }));
   };
 
-  const selfGrade = (knew: boolean) => {
-    setAnswers((prev) => ({ ...prev, [q.id]: { correct: knew } }));
+  const gradeTyped = (typed: string, correct: boolean) => {
+    setAnswers((prev) => ({ ...prev, [q.id]: { typed, correct } }));
     reviewEngine.recordAttempt({
       user_id: getCurrentUserId(),
       question_id: q.id,
       topic_id: q.source_topic,
-      correct: knew,
+      correct,
       timestamp: new Date().toISOString(),
     });
-    setIndex((i) => i + 1);
   };
 
   const answeredCount = questions.filter((qq) => answers[qq.id] !== undefined).length;
@@ -168,28 +169,13 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
           </div>
         )}
 
-        {q.format === "fill-blank" && !state && (
-          <button type="button" style={S.revealBtn} onClick={revealFlashcard}>
-            Show what this question is really asking you to know
-          </button>
-        )}
-
-        {q.format === "fill-blank" && state && state.correct === null && (
-          <>
-            <div style={S.revealBox}>
-              This is a recall prompt — the knowledge base intentionally stores no fixed
-              answer for interview-style questions. Say your answer out loud, then grade
-              yourself honestly.
-            </div>
-            <div style={S.selfGradeRow}>
-              <button style={S.knewBtn} onClick={() => selfGrade(true)}>
-                I knew this
-              </button>
-              <button style={S.didntBtn} onClick={() => selfGrade(false)}>
-                I didn't know this
-              </button>
-            </div>
-          </>
+        {(q.format === "fill-blank" || q.format === "command-completion") && (
+          <RecallAnswer
+            correctAnswer={q.correct_answer}
+            state={state ? { typed: state.typed ?? "", correct: state.correct } : undefined}
+            onSubmit={submitTyped}
+            onGrade={(correct) => gradeTyped(state?.typed ?? "", correct)}
+          />
         )}
       </div>
 
@@ -226,11 +212,6 @@ const S: Record<string, React.CSSProperties> = {
   option: { display: "block", width: "100%", textAlign: "left", padding: "11px 14px", marginBottom: 8, border: "1px solid var(--border, #E3E2DC)", borderRadius: 8, background: "var(--card-bg)", fontSize: 14, cursor: "pointer", color: "var(--text-primary, #1A1A18)" },
   optionCorrect: { background: "#E7F3E8", borderColor: "#2E7D32", color: "#1c4a20", fontWeight: 600 },
   optionWrong: { background: "#FBEAE8", borderColor: "#C0392B", color: "#7a1f1f", fontWeight: 600 },
-  revealBtn: { padding: "9px 16px", borderRadius: 8, border: "1px solid var(--accent, #6C5CE7)", background: "var(--accent-bg, #EEECFC)", color: "var(--accent-text, #4B3FB0)", fontSize: 13.5, fontWeight: 600, cursor: "pointer" },
-  revealBox: { marginTop: 12, padding: "12px 14px", background: "#F7F6FF", borderLeft: "3px solid var(--accent, #6C5CE7)", borderRadius: "0 8px 8px 0", fontSize: 14, color: "var(--text-secondary, #6B6B65)" },
-  selfGradeRow: { display: "flex", gap: 8, marginTop: 10 },
-  knewBtn: { flex: 1, padding: 8, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", border: "1px solid #2E7D32", background: "#E7F3E8", color: "#1c4a20" },
-  didntBtn: { flex: 1, padding: 8, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", border: "1px solid #C0392B", background: "#FBEAE8", color: "#7a1f1f" },
   navRow: { display: "flex", justifyContent: "space-between" },
   navBtn: { padding: "6px 14px", border: "1px solid var(--border, #E3E2DC)", borderRadius: 999, background: "var(--card-bg)", fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
   emptyState: { padding: "40px 20px", textAlign: "center", color: "var(--text-secondary, #6B6B65)" },

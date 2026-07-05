@@ -9,12 +9,19 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as examEngine from "../../engines/exam-engine";
 import * as reviewEngine from "../../engines/review-engine";
 import { getCurrentUserId } from "../../services/current-user";
+import RecallAnswer from "../components/RecallAnswer";
 import type { ExamSession } from "../../engines/exam-engine";
+
+interface ExamAnswerState {
+  picked?: string;
+  typed?: string;
+  correct: boolean | null; // null = typed but not yet graded (recall formats)
+}
 
 export default function ExamPage() {
   const [session, setSession] = useState<ExamSession | null>(null);
   const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, { picked?: string; correct: boolean }>>({});
+  const [answers, setAnswers] = useState<Record<string, ExamAnswerState>>({});
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [finished, setFinished] = useState(false);
   const timerRef = useRef<number | null>(null);
@@ -50,7 +57,7 @@ export default function ExamPage() {
     for (const q of session.questions) {
       const entry = byTopic.get(q.source_topic) ?? { total: 0, correct: 0 };
       entry.total += 1;
-      if (answers[q.id]?.correct) entry.correct += 1;
+      if (answers[q.id]?.correct === true) entry.correct += 1;
       byTopic.set(q.source_topic, entry);
     }
     return [...byTopic.entries()].sort((a, b) => b[1].total - a[1].total);
@@ -74,7 +81,7 @@ export default function ExamPage() {
     );
   }
 
-  const graded = session.questions.filter((q) => answers[q.id] !== undefined);
+  const graded = session.questions.filter((q) => answers[q.id]?.correct !== undefined && answers[q.id]?.correct !== null);
   const correctCount = graded.filter((q) => answers[q.id].correct).length;
 
   if (finished || index >= session.questions.length) {
@@ -124,6 +131,21 @@ export default function ExamPage() {
   const answer = (picked: string) => {
     const correct = picked === q.correct_answer;
     setAnswers((prev) => ({ ...prev, [q.id]: { picked, correct } }));
+    reviewEngine.recordAttempt({
+      user_id: getCurrentUserId(),
+      question_id: q.id,
+      topic_id: q.source_topic,
+      correct,
+      timestamp: new Date().toISOString(),
+    });
+  };
+
+  const submitTyped = (typed: string) => {
+    setAnswers((prev) => ({ ...prev, [q.id]: { typed, correct: null } }));
+  };
+
+  const gradeTyped = (typed: string, correct: boolean) => {
+    setAnswers((prev) => ({ ...prev, [q.id]: { typed, correct } }));
     reviewEngine.recordAttempt({
       user_id: getCurrentUserId(),
       question_id: q.id,
@@ -186,10 +208,12 @@ export default function ExamPage() {
         )}
 
         {q.format !== "mcq" && (
-          <div style={S.recallBox}>
-            This is a recall-style exam item — say your answer out loud, then move on; there's no
-            fixed key for open recall prompts (matches the source material's own convention).
-          </div>
+          <RecallAnswer
+            correctAnswer={q.correct_answer}
+            state={state ? { typed: state.typed ?? "", correct: state.correct ?? null } : undefined}
+            onSubmit={submitTyped}
+            onGrade={(correct) => gradeTyped(state?.typed ?? "", correct)}
+          />
         )}
       </div>
 
