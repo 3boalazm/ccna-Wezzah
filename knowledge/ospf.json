@@ -1,0 +1,166 @@
+{
+  "topic_id": "ospf",
+  "path": ["CCNA", "Routing", "OSPF"],
+  "source_docs": ["CCNA_Deep_Dive.pdf"],
+  "last_updated": "2026-07-05",
+  "completeness": "high",
+  "gaps": ["header_fields", "port_numbers", "protocol_numbers"],
+
+  "overview": "OSPF (Open Shortest Path First) is the most important dynamic routing protocol in CCNA scope — the foundation of all dynamic routing topics. Routers exchange network information automatically; if a link fails, an alternate path is recalculated automatically and quickly (Convergence) without human intervention. It handles large, complex networks, and after a simple initial setup it self-manages.",
+
+  "definitions": [
+    "Convergence: the speed at which routers recalculate a new best path after a failure.",
+    "DR (Designated Router) / BDR (Backup DR): on multi-access networks, elected routers that all other routers (DROTHER) form Full adjacency with, instead of a full mesh of adjacencies.",
+    "LSDB (Link-State Database): the complete collection of LSAs a router has received; all routers within the same Area must have an identical copy.",
+    "SPF (Dijkstra): the algorithm each router runs independently on the same LSDB to build its own shortest-path tree rooted at itself."
+  ],
+
+  "core_concepts": [
+    "Static vs. Dynamic routing: with static routing an engineer writes every route manually, old routes remain on failure (needing manual update), and it suits only very few routes; OSPF (dynamic) has routers exchange info automatically, recalculates an alternate path automatically on failure (Convergence), and handles large, complex networks.",
+    "DR/BDR election: on multi-access networks (like Ethernet), a full mesh of adjacencies would explode, so a DR and BDR are elected and all other routers (DROTHER) form Full adjacency only with those two. Election is by highest Priority (manually configurable, default 1), ties broken by highest Router ID. Priority 0 means a router never participates and stays DROTHER permanently.",
+    "LSA Types (CCNA scope): Type 1 Router LSA (each router describes itself and its interfaces within its area); Type 2 Network LSA (created by the DR only, describes the multi-access network); Type 3 Summary LSA (carried by the ABR between different areas); Type 5 External LSA (routes from outside OSPF via redistribution, from an ASBR).",
+    "From LSAs to best path: every router collects all received LSAs into the LSDB (identical within an area) → each router runs SPF/Dijkstra independently on that database to build its own shortest-path tree → the best Metric per network is installed in the routing table.",
+    "Cost (Metric) formula: Cisco default Cost = 10^8 / Bandwidth(bps), rounded up to the nearest whole number. FastEthernet (100 Mbps) = 1, GigabitEthernet (1000 Mbps) = 1 (the same as FastEthernet — the classic trap), Serial T1 (1.544 Mbps) = 64."
+  ],
+
+  "protocol_operation": [
+    "Every OSPF-enabled router sends periodic Hello messages (every 10 seconds on Broadcast networks) to the multicast address 224.0.0.5 on every participating interface.",
+    "Four conditions must match exactly for two routers to become neighbors: Area ID (same area), Subnet (same subnet and mask), Timers (Hello and Dead Interval), and Auth (authentication settings, if enabled).",
+    "Adjacency handshake: R1 sends Hello (Area 0, 224.0.0.5) → R2 replies with a Hello listing R1 as a neighbor → R1 sends a Hello listing R2 → the 2-Way state is reached.",
+    "Neighbor states progress Down → Init → 2-Way → ExStart → Exchange → Loading → Full.",
+    "Down: no contact yet; no Hello received from the other side.",
+    "Init: received a Hello from the neighbor, but its own name has not yet appeared inside it — one-directional only.",
+    "2-Way: each router has seen its own name in the other's Hello; the relationship is bidirectional. DR/BDR election happens here on multi-access networks.",
+    "ExStart: the two routers agree who starts first (Master/Slave), based on the higher Router ID.",
+    "Exchange: DBD summaries are exchanged, showing database contents without sending full details yet.",
+    "Loading: each router requests missing LSA details from the other via LSR/LSU messages.",
+    "Full: the databases (LSDB) are completely identical; the relationship is ready for path calculation."
+  ],
+
+  "packet_flow": "Hello (to 224.0.0.5) discovers neighbors -> Down -> Init -> 2-Way (DR/BDR elected on multi-access) -> ExStart (Master/Slave chosen by higher Router ID) -> Exchange (DBD summaries) -> Loading (LSR/LSU for missing LSAs) -> Full (identical LSDB) -> each router runs SPF/Dijkstra on its LSDB -> the best-Cost route (Cost = 10^8 / Bandwidth) is installed in the routing table.",
+
+  "header_fields": [],
+  "default_values": [
+    "Hello Interval: 10 seconds by default on Broadcast/Ethernet networks.",
+    "Dead Interval: 40 seconds by default (4x the Hello Interval).",
+    "DR/BDR election Priority: default 1 (configurable; 0 = never participates).",
+    "Reference Bandwidth: Cisco default 10^8 (100 Mbps), used in Cost = 10^8 / Bandwidth."
+  ],
+  "port_numbers": [],
+  "timers": [
+    "Hello Interval: 10 seconds on Broadcast networks; must match exactly between neighbors.",
+    "Dead Interval: 40 seconds by default (4x the Hello Interval); must match exactly between neighbors.",
+    "Hello and Dead Intervals are two of the four adjacency conditions — a mismatch stalls the adjacency at Init and it never reaches 2-Way."
+  ],
+  "protocol_numbers": [],
+
+  "config_commands": [
+    { "command": "router ospf 1", "purpose": "Enter OSPF process configuration (process id 1)." },
+    { "command": "network 10.1.1.0 0.0.0.255 area 0", "purpose": "Enable OSPF on interfaces within a network and assign them to an area." },
+    { "command": "router-id 1.1.1.1", "purpose": "Manually set the router's OSPF Router ID." },
+    { "command": "ip ospf priority <n>", "purpose": "Set the DR/BDR election priority on an interface (default 1; 0 = never DR/BDR)." },
+    { "command": "ip ospf hello-interval <seconds>", "purpose": "Set the Hello Interval on an interface (must match the neighbor)." },
+    { "command": "auto-cost reference-bandwidth <mbps>", "purpose": "Raise the reference bandwidth so Gigabit and FastEthernet no longer share Cost 1 (best practice on modern networks)." },
+    { "command": "ip ospf mtu-ignore", "purpose": "Temporarily bypass the MTU match check on an interface (ExStart/Exchange MTU-mismatch workaround)." }
+  ],
+
+  "verification_commands": [
+    { "command": "show ip ospf neighbor", "purpose": "List each neighbor and its current state (should reach Full)." },
+    { "command": "show ip ospf database", "purpose": "Display this router's actual LSDB content." },
+    { "command": "show ip protocols", "purpose": "Summary of active routing-protocol settings." },
+    { "command": "show ip ospf interface <id>", "purpose": "Per-interface OSPF settings including Timers and MTU (used in troubleshooting)." }
+  ],
+  "show_commands": [
+    { "command": "show ip ospf neighbor", "purpose": "The primary adjacency-state view (state should be Full)." },
+    { "command": "show ip ospf interface GigabitEthernet0/1 | include Timer", "purpose": "Confirm the Hello/Dead timers configured on an interface." },
+    { "command": "show ip ospf interface Gi0/1 | include MTU", "purpose": "Confirm the interface MTU when a neighbor is stuck in ExStart." }
+  ],
+  "debug_commands": [
+    { "command": "debug ip ospf adj", "purpose": "Live trace of the adjacency-building stages, moment by moment." }
+  ],
+
+  "cli_examples": [
+    {
+      "title": "Reading show ip ospf neighbor",
+      "code": "R1# show ip ospf neighbor\nNeighbor ID   Pri   State        Address        Interface\n2.2.2.2       100   FULL/DR      192.168.1.2    Gi0/1\n4.4.4.4       1     FULL/BDR     192.168.1.4    Gi0/1\n3.3.3.3       0     FULL/DROTHER 192.168.1.3    Gi0/1",
+      "explanation": "All lines reached FULL — adjacency complete. The State column shows each neighbor's role (DR/BDR/DROTHER) relative to R1, and Pri shows its configured priority (3.3.3.3 has priority 0, so it stays DROTHER)."
+    },
+    {
+      "title": "Timer mismatch diagnosis (stuck in Init)",
+      "code": "R3# show ip ospf interface GigabitEthernet0/1 | include Timer\nTimer intervals configured, Hello 10, Dead 40\nR4# show ip ospf interface GigabitEthernet0/1 | include Timer\nTimer intervals configured, Hello 5, Dead 20",
+      "explanation": "Hello/Dead timers differ (10/40 vs 5/20), so the adjacency stays stuck at Init and never reaches 2-Way. Timers must match exactly."
+    },
+    {
+      "title": "MTU mismatch diagnosis (stuck in ExStart)",
+      "code": "R1# debug ip ospf adj\n%OSPF: Nbr 3.3.3.3 has larger interface MTU\nR1# show ip ospf interface Gi0/1 | include MTU\nMTU 1500\nR3# show ip ospf interface Gi0/1 | include MTU\nMTU 1400",
+      "explanation": "The debug message plus mismatched MTU (1500 vs 1400) is the classic signature of a neighbor never reaching Full and hanging at ExStart/Exchange."
+    }
+  ],
+
+  "config_examples": [
+    {
+      "title": "Two-router single-area OSPF (R2 as DR via higher priority)",
+      "code": "! R1\ninterface GigabitEthernet0/1\n ip address 192.168.1.1 255.255.255.0\nrouter ospf 1\n router-id 1.1.1.1\n network 192.168.1.0 0.0.0.255 area 0\n!\n! R2 (DR — higher priority)\ninterface GigabitEthernet0/1\n ip address 192.168.1.2 255.255.255.0\n ip ospf priority 100\nrouter ospf 1\n router-id 2.2.2.2\n network 192.168.1.0 0.0.0.255 area 0",
+      "explanation": "Same pattern repeats for R3 (with ip ospf priority 0, so it never becomes DR/BDR) and R4, using 192.168.1.3 and 192.168.1.4 respectively."
+    }
+  ],
+
+  "troubleshooting": [
+    {
+      "symptom": "Adjacency stays stuck at Init and never reaches 2-Way.",
+      "cause": "Hello/Dead Interval mismatch between neighbors (e.g. Hello 10 on one side vs Hello 5 on the other).",
+      "fix": "Standardize the hello-interval (and therefore dead-interval) on both interfaces so the timers match exactly."
+    },
+    {
+      "symptom": "Neighbor never reaches Full — stuck at ExStart or Exchange.",
+      "cause": "MTU mismatch between the two interfaces (e.g. 1500 vs 1400); debug ip ospf adj shows 'has larger interface MTU'.",
+      "fix": "Standardize the MTU on both interfaces, or temporarily apply ip ospf mtu-ignore."
+    },
+    {
+      "symptom": "OSPF selects a suboptimal path; a Gigabit and a FastEthernet link are treated as equal cost.",
+      "cause": "The default Reference Bandwidth is only 10^8, so both interfaces compute Cost = 1.",
+      "fix": "Standardize auto-cost reference-bandwidth across all routers so higher-speed links get a lower cost."
+    },
+    {
+      "symptom": "An OSPF neighbor relationship fails to form across a link that has an inbound ACL applied.",
+      "cause": "The inbound ACL is silently dropping OSPF Hello packets because they are not explicitly permitted.",
+      "fix": "Add an explicit permit for OSPF (its 224.0.0.5 multicast) to the inbound ACL; check show ip access-lists match counters. This is the OSPF step of the NAT -> OSPF -> ACL branch chain."
+    }
+  ],
+
+  "best_practices": [
+    "Standardize auto-cost reference-bandwidth across all routers in modern high-bandwidth networks to avoid incorrect path selection caused by the Gigabit/FastEthernet cost collision (both default to Cost 1)."
+  ],
+
+  "security_notes": [
+    "Authentication (Auth) is one of the four mandatory matching conditions for neighbor formation — if enabled, mismatched authentication settings silently block adjacency just like a timer or subnet mismatch would."
+  ],
+
+  "interview_questions": [
+    "Recite the seven neighbor states in order.",
+    "What is the DR/BDR election criteria (Priority first, then Router ID)?",
+    "Explain the Cost formula and the Gigabit/FastEthernet trap.",
+    "What are the four conditions required to form an OSPF neighbor relationship (Area, Subnet, Timers, Auth)?",
+    "Which LSA Types matter most in a single-area design (Type 1 and Type 2)?",
+    "What is the classic cause of getting stuck in ExStart (MTU mismatch)?"
+  ],
+
+  "exam_traps": [
+    "Memorize the seven neighbor states by heart, in order: Down, Init, 2-Way, ExStart, Exchange, Loading, Full.",
+    "DR/BDR election criterion: Priority first, then Router ID.",
+    "The Cost formula and the Gigabit-vs-FastEthernet trap (both get Cost = 1 by default).",
+    "The four conditions to form adjacency: Area, Subnet, Timers, Auth.",
+    "Type 1 and Type 2 LSAs are the most important within a single area.",
+    "MTU mismatch is the classic cause of hanging in ExStart."
+  ],
+
+  "enterprise_notes": [
+    "In MPLS VPN WAN designs (cross-reference to WAN Architecture), the CE router forms OSPF adjacency with the PE router, not directly with CE routers at other sites — this module's neighbor-formation mechanics apply identically at that CE-PE boundary.",
+    "OSPF is the middle layer of the 3-step branch-connectivity troubleshooting chain (NAT -> OSPF -> ACL): check show ip ospf neighbor between the NAT and ACL checks."
+  ],
+
+  "related_topics": ["acl", "nat", "wan_architecture", "routing_table"],
+  "difficulty": "Hard",
+  "keywords": ["Convergence", "DR", "BDR", "LSDB", "SPF", "Dijkstra", "LSA", "Neighbor States", "Cost", "MTU"],
+  "tags": ["OSPF", "DynamicRouting", "Routing", "CCNA-Core"]
+}

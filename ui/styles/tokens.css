@@ -1,0 +1,60 @@
+/* ui/styles/tokens.css
+   Design system tokens for the CCNA platform's workspace UI.
+   Layout paradigm borrowed deliberately from AppFlowy (sidebar tree + clean
+   content pane, per explicit request) — palette and category-color system
+   are original, tuned for a network-engineering audience rather than a
+   generic workspace tool.
+*/
+
+:root {
+  /* Surfaces */
+  --ws-bg: #FAFAF8;            /* main content background - warm off-white */
+  --sidebar-bg: #F3F3EF;       /* sidebar background - one shade cooler/darker */
+  --card-bg: #FFFFFF;
+  --hover-bg: #ECECE7;
+
+  /* Borders */
+  --border: #E3E2DC;
+  --border-strong: #CFCEC6;
+
+  /* Text */
+  --text-primary: #1A1A18;
+  --text-secondary: #6B6B65;
+  --text-muted: #9C9B94;
+
+  /* Accent (primary actions, active nav state) */
+  --accent: #6C5CE7;
+  --accent-bg: #EEECFC;
+  --accent-text: #4B3FB0;
+
+  /* Domain category colors — functional, not decorative.
+     Used consistently: sidebar dot, content header accent border, badges. */
+  --domain-routing: #2E5AAC;      /* OSPF, Routing Table, FHRP */
+  --domain-routing-bg: #E8EFFA;
+  --domain-switching: #B8860B;    /* Port Security, VLAN/Trunk (future) */
+  --domain-switching-bg: #FBF3DF;
+  --domain-security: #C0392B;     /* Security, ACL, DHCP Snooping/DAI */
+  --domain-security-bg: #FBEAE8;
+  --domain-ip-services: #0F6E56;  /* NAT, DHCP, DNS, SNMP, NTP, Syslog */
+  --domain-ip-services-bg: #E5F3EF;
+  --domain-automation: #6C5CE7;   /* Automation, SDN, SDA */
+  --domain-automation-bg: #EEECFC;
+  --domain-wireless: #D85A30;     /* Wireless */
+  --domain-wireless-bg: #FBEEE7;
+  --domain-architecture: #5F5E5A; /* LAN/WAN Architecture, Cloud, QoS */
+  --domain-architecture-bg: #EFEEEA;
+
+  /* Difficulty (kept from TopicPage, unified here) */
+  --difficulty-easy: #2E7D32;
+  --difficulty-medium: #B8860B;
+  --difficulty-hard: #C0392B;
+
+  /* Typography */
+  --font-ui: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, Menlo, monospace;
+
+  /* Layout */
+  --sidebar-width: 268px;
+  --radius: 8px;
+  --radius-card: 12px;
+}

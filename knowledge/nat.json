@@ -1,0 +1,135 @@
+{
+  "topic_id": "nat",
+  "path": ["CCNA", "NAT"],
+  "source_docs": ["Doc5", "Doc7", "Doc9", "Doc10", "CCNA_Deep_Dive.pdf"],
+  "last_updated": "2026-07-05",
+  "completeness": "high",
+  "gaps": ["default_values", "timers", "protocol_numbers", "debug_commands"],
+
+  "overview": "NAT (Network Address Translation) is a mechanism that allows hosts with private IP addresses to communicate with the Internet by translating them into registered public addresses. It solves IPv4 address exhaustion and lets internal hosts using private addressing reach external networks.",
+
+  "definitions": [
+    "Inside Local: the private IP address assigned to a host on the inside network.",
+    "Inside Global: the public IP address that represents an internal host to the outside world.",
+    "Outside Global: the IP address of an external host as seen from the network.",
+    "NAT Overload (PAT): using transport-layer port numbers to allow many internal hosts to share one public IP address."
+  ],
+
+  "core_concepts": [
+    "Static NAT: manual, permanent one-to-one mapping between an inside local and inside global address.",
+    "Dynamic NAT: automatic one-to-one mapping, drawn from a pool.",
+    "PAT/NAT Overload: many-to-one mapping using port numbers to distinguish flows."
+  ],
+
+  "protocol_operation": [
+    "Ingress: packet from internal host enters the 'ip nat inside' interface.",
+    "Trigger check: router checks if source matches the NAT ACL.",
+    "Translation: source IP (and port, for PAT) is rewritten to the Inside Global address.",
+    "Egress: translated packet exits the 'ip nat outside' interface.",
+    "Return traffic: router consults the NAT table to rewrite destination back to Inside Local."
+  ],
+
+  "packet_flow": "Internal Host (192.168.1.10:5000) -> ip nat inside interface -> matched against NAT ACL -> source rewritten to Inside Global (203.0.113.5:41000) -> ip nat outside interface -> Internet -> response arrives at outside interface -> router consults NAT table -> rewrites destination back to Inside Local -> delivered to 192.168.1.10.",
+
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [
+    "PAT relies on the full 16-bit transport port range (0-65535) to distinguish concurrent flows sharing one public IP.",
+    "PAT can support over 65,000 concurrent flows per IP address."
+  ],
+  "timers": [],
+  "protocol_numbers": [],
+
+  "config_commands": [
+    { "command": "ip nat inside", "purpose": "Mark an interface as facing the internal network." },
+    { "command": "ip nat outside", "purpose": "Mark an interface as facing the external network." },
+    { "command": "ip nat inside source static [local-ip] [global-ip]", "purpose": "Configure Static NAT." },
+    { "command": "ip nat pool [name] [start] [end] netmask [mask]", "purpose": "Define a pool for Dynamic NAT." },
+    { "command": "ip nat inside source list [acl] pool [name]", "purpose": "Bind an ACL to a Dynamic NAT pool." },
+    { "command": "ip nat inside source list [acl] interface [type/number] overload", "purpose": "Configure PAT (Overload) on an interface." }
+  ],
+
+  "verification_commands": [
+    { "command": "show ip nat translations", "purpose": "Display the active NAT table." },
+    { "command": "show ip nat statistics", "purpose": "Display hit/miss counters and pool usage." },
+    { "command": "clear ip nat translation *", "purpose": "Clear all dynamic entries." }
+  ],
+  "show_commands": [
+    { "command": "show ip nat translations", "purpose": "Same as verification — the primary NAT table view." }
+  ],
+  "debug_commands": [],
+
+  "cli_examples": [
+    {
+      "title": "Reading show ip nat statistics",
+      "code": "Total active translations: 3 (0 static, 3 dynamic; 3 extended)\nOutside interfaces: Serial0/0/0, Inside interfaces: GigabitEthernet0/0\nHits: 103  Misses: 3",
+      "explanation": "Misses increments when a packet arrives but no entry exists; if pool misses increment specifically, the pool of global addresses is exhausted."
+    },
+    {
+      "title": "PAT multi-host translation table",
+      "code": "Inside Local: 192.168.1.10:5000 -> Inside Global: 203.0.113.5:41000 -> Outside Global: 8.8.8.8:80\nInside Local: 192.168.1.11:5000 -> Inside Global: 203.0.113.5:41001 -> Outside Global: 8.8.8.8:80",
+      "explanation": "Same public IP, different port number — this is how the router distinguishes returning traffic per internal host under PAT."
+    }
+  ],
+
+  "config_examples": [
+    {
+      "title": "Full PAT example",
+      "code": "ip nat pool PUBLIC_POOL 200.1.1.1 200.1.1.10 netmask 255.255.255.0\naccess-list 1 permit 10.1.1.0 0.0.0.255\nip nat inside source list 1 interface GigabitEthernet0/1 overload\n!\ninterface GigabitEthernet0/0\n ip nat inside\n!\ninterface GigabitEthernet0/1\n ip nat outside"
+    },
+    {
+      "title": "Publish an internal web server via Static NAT",
+      "code": "ip nat inside source static tcp 192.168.1.100 80 203.0.113.5 80"
+    }
+  ],
+
+  "troubleshooting": [
+    {
+      "symptom": "show ip nat translations is completely empty despite active traffic.",
+      "cause": "Forgot to designate ip nat inside and/or ip nat outside on any interface.",
+      "fix": "Apply 'ip nat inside' on the internal interface and 'ip nat outside' on the external interface."
+    },
+    {
+      "symptom": "Users can reach the internal server but not the Internet; show ip nat statistics shows many pool misses.",
+      "cause": "Dynamic NAT pool exhaustion.",
+      "fix": "Expand the pool or switch to PAT (Overload) to conserve addresses."
+    },
+    {
+      "symptom": "Branch using OSPF over MPLS with NAT Overload and an ACL cannot reach the company server.",
+      "cause": "Could be NAT, OSPF neighbor state, or an ACL deny line — requires the 3-step diagnostic chain.",
+      "fix": "1) show ip nat translations, 2) debug ip ospf hello / show ip ospf neighbor, 3) show ip access-lists for unexpected deny matches."
+    }
+  ],
+
+  "best_practices": [
+    "Use PAT (NAT Overload) whenever possible to conserve public IPv4 addresses.",
+    "Use specific ACLs for NAT to avoid translating unwanted traffic (e.g. management traffic)."
+  ],
+
+  "security_notes": [
+    "NAT is not a security mechanism by itself — it provides address translation, not access control. A firewall is still required."
+  ],
+
+  "interview_questions": [
+    "What is the purpose of Port Address Translation (PAT)?",
+    "Explain the difference between Inside Local, Inside Global, and Outside Global addresses.",
+    "Why must the overload keyword be included in a dynamic NAT/PAT configuration?",
+    "Does NAT provide security? Why or why not?",
+    "Which NAT type would you choose for a single server needing a fixed public address vs. hundreds of devices sharing one public IP?"
+  ],
+
+  "exam_traps": [
+    "Inside vs. Outside confusion — mixing up which interface is which.",
+    "Global vs. Local confusion — Local = private/internal-facing, Global = public/external-facing.",
+    "Forgetting the overload keyword, which limits translations to strict one-to-one instead of many-to-one."
+  ],
+
+  "enterprise_notes": [
+    "In a branch scenario combining OSPF over MPLS, NAT Overload, and an ACL, NAT issues are one of three layers that must be checked in sequence when a branch loses connectivity to a central server."
+  ],
+
+  "related_topics": ["acl", "ospf", "dhcp"],
+  "difficulty": "Hard",
+  "keywords": ["Inside Local", "Inside Global", "Outside Global", "Overload", "Static NAT", "Dynamic NAT", "PAT", "NAT Pool"],
+  "tags": ["NAT", "IP-Services", "PAT", "Enterprise-Troubleshooting"]
+}

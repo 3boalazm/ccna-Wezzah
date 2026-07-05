@@ -1,0 +1,12 @@
+{
+  "template_id": "dhcp_snooping_blocks_legit_server",
+  "topics_involved": ["dhcp", "dhcp_snooping_dai"],
+  "symptom_text": "DHCP Snooping was just enabled on the access switch in the technical department. Suddenly all users stop getting IP addresses, even though the DHCP server is working perfectly and connected to port GigabitEthernet0/1.",
+  "hidden_root_cause": "The server-facing port (Gi0/1) was never marked as 'ip dhcp snooping trust' — the switch is dropping the server's own Offer/Ack messages because it treats that port as untrusted by default.",
+  "expected_diagnostic_order": [
+    "Confirm the DHCP server itself is healthy and reachable.",
+    "Check DHCP Snooping port trust state on the server-facing interface.",
+    "Apply 'ip dhcp snooping trust' on the correct port and re-test.",
+    "Follow-up question: if DAI is enabled later without DHCP Snooping active, will it function? (No — DAI depends entirely on the DHCP Snooping binding table.)"
+  ]
+}

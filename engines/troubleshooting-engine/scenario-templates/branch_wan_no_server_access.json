@@ -1,0 +1,11 @@
+{
+  "template_id": "branch_wan_no_server_access",
+  "topics_involved": ["ospf", "nat", "acl"],
+  "symptom_text": "A branch office using OSPF over an MPLS link, with NAT Overload for internet access and an ACL for protection, cannot reach the central company server.",
+  "hidden_root_cause": "Configurable per instance — could be a NAT pool exhaustion, an OSPF neighbor down (MTU/timer mismatch), or an ACL deny line silently matching the intended traffic.",
+  "expected_diagnostic_order": [
+    "Check NAT: are branch addresses translating correctly? (show ip nat translations)",
+    "Check OSPF: is there a neighbor relationship with the provider router? (debug ip ospf hello, show ip ospf neighbor)",
+    "Check ACL: is there a deny line matching the intended traffic? (show ip access-lists — watch match counters increment)"
+  ]
+}

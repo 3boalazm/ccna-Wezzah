@@ -1,0 +1,11 @@
+{
+  "template_id": "ospf_stuck_exstart_mtu",
+  "topics_involved": ["ospf"],
+  "symptom_text": "R3 never reaches the Full state with its neighbor, staying stuck at EXSTART or EXCHANGE.",
+  "hidden_root_cause": "MTU mismatch between the two interfaces (e.g. R1 at 1500, R3 at 1400) — the single most common cause of hanging specifically at this stage.",
+  "expected_diagnostic_order": [
+    "Run 'debug ip ospf adj' and look for 'has larger interface MTU' messages.",
+    "Compare MTU on both interfaces with 'show ip ospf interface <int> | include MTU'.",
+    "Fix by standardizing MTU on both interfaces, or temporarily apply 'ip ospf mtu-ignore'."
+  ]
+}

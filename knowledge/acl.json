@@ -1,0 +1,184 @@
+{
+  "topic_id": "acl",
+  "path": ["CCNA", "ACL"],
+  "source_docs": ["CCNA_Deep_Dive.pdf"],
+  "last_updated": "2026-07-05",
+  "completeness": "high",
+  "gaps": ["timers", "debug_commands"],
+
+  "overview": "ACLs (Access Control Lists) filter packets on Cisco devices. Standard ACLs match the source IP only; Extended ACLs match protocol, source/destination IP, and ports.",
+
+  "definitions": [
+    "ACE (Access Control Entry): one line in an ACL.",
+    "Wildcard Mask: '0' = the bit must match, '1' (or '255' in octet form) = ignore the bit.",
+    "Standard ACL: matches the source IP only.",
+    "Extended ACL: full 5-tuple-style match (protocol / source / destination / port)."
+  ],
+
+  "core_concepts": [
+    "First-Match Logic: the router evaluates ACEs top-down and stops at the first matching entry.",
+    "Implicit Deny: an invisible 'deny all' sits at the end of every ACL.",
+    "Placement rule: place a Standard ACL near the destination; place an Extended ACL near the source.",
+    "Named ACLs: allow individual line insertion/deletion, with sequence numbers defaulting to increments of 10. Numbered (old-style) ACLs have no sequence numbers, so editing usually means deleting and rewriting the whole list.",
+    "Rule ordering: specific statements must come before general ones — a broad permit placed above a specific deny makes the deny never trigger.",
+    "Difficulty split: Standard ACLs are Medium difficulty; Extended ACLs (protocol/port matching and wildcard math) are Hard."
+  ],
+
+  "protocol_operation": [
+    "Packet enters an interface → the inbound ACL is checked (if one is applied).",
+    "The packet is compared sequentially against the ACEs.",
+    "The first match triggers permit or deny and the search stops.",
+    "If permitted, the routing decision is made → the outbound ACL (if any) is checked before egress."
+  ],
+
+  "packet_flow": "Ingress -> inbound ACL match (sequential, first-match) -> Permit/Deny -> (if permit) routing lookup -> outbound ACL check -> forward or drop. The implicit deny at the end drops anything not explicitly permitted.",
+
+  "header_fields": [
+    "Standard ACLs match on the IP header source address only.",
+    "Extended ACLs additionally match the IP header destination address and the transport header (protocol and port numbers).",
+    "Port keywords map to well-known ports: www=80, domain=53, bootps=67."
+  ],
+  "default_values": [
+    "ACE sequence numbers increment by 10 by default."
+  ],
+  "port_numbers": [
+    "Table 3-3 keywords: www=80, domain=53, bootps=67 (plus the other well-known ports from Chapter 1)."
+  ],
+  "timers": [],
+  "protocol_numbers": [
+    "ACLs reference protocol numbers when matching by protocol: TCP=6, UDP=17, and ICMP."
+  ],
+
+  "config_commands": [
+    { "command": "access-list {permit|deny} [source] [wildcard]", "purpose": "Standard numbered ACL entry (source-IP-only match)." },
+    { "command": "access-list {permit|deny} [protocol] [src] [src-wc] [dst] [dst-wc] [op port]", "purpose": "Extended numbered ACL entry (protocol/src/dst/port match)." },
+    { "command": "ip access-list {standard|extended} [name]", "purpose": "Create a Named ACL (global config), enabling per-line editing." },
+    { "command": "ip access-group [number|name] {in|out}", "purpose": "Apply an ACL to an interface in a direction." },
+    { "command": "access-class [number|name] in", "purpose": "Apply an ACL to VTY lines (remote-access restriction)." },
+    { "command": "access-list [number] remark [text]", "purpose": "Document an ACL's intent." },
+    { "command": "no [sequence-number]", "purpose": "Delete a single line by its sequence number (in named-ACL mode)." }
+  ],
+
+  "verification_commands": [
+    { "command": "show ip access-lists", "purpose": "ACL lines plus per-line match counters." },
+    { "command": "show access-lists", "purpose": "All ACL types, including IPv6." },
+    { "command": "show ip interface [id]", "purpose": "Shows the applied ACL and its direction." }
+  ],
+  "show_commands": [
+    { "command": "show ip access-lists", "purpose": "Read ACL lines and match counters to confirm traffic is hitting the expected rule." },
+    { "command": "show access-lists [name]", "purpose": "Read a specific named ACL and its per-line match counts." },
+    { "command": "show ip interface [id]", "purpose": "Confirm which ACL is applied and in which direction." }
+  ],
+  "debug_commands": [],
+
+  "cli_examples": [
+    {
+      "title": "Reading show ip access-lists (Standard)",
+      "code": "Standard IP access list 1\n  10 permit 10.1.1.1 (107 matches)\n  20 deny 10.1.1.0, wildcard bits 0.0.0.255 (4 matches)",
+      "explanation": "Line 10 matched 107 packets; the match counter confirms whether traffic is actually hitting the expected rule."
+    },
+    {
+      "title": "Reading show access-lists for a named ACL",
+      "code": "R1# show access-lists FINANCE-TO-SERVER\n10 permit tcp 192.168.20.0 0.0.0.255 host 192.168.30.5 eq 443 (142 matches)\n20 deny ip any host 192.168.30.5 (37 matches)\n30 permit ip any any (2003 matches)",
+      "explanation": "37 blocked attempts on line 20 confirm active attempts to reach the server on a disallowed protocol, and that the rule is working correctly."
+    }
+  ],
+
+  "config_examples": [
+    {
+      "title": "Block Telnet (Extended, named)",
+      "code": "ip access-list extended BLOCK_TELNET\n deny tcp any any eq 23\n permit ip any any\n!\ninterface GigabitEthernet0/1\n ip access-group BLOCK_TELNET in"
+    },
+    {
+      "title": "Restrict Finance to HTTPS-only access to a server (Extended, placed near source)",
+      "code": "ip access-list extended FINANCE-TO-SERVER\n permit tcp 192.168.20.0 0.0.0.255 host 192.168.30.5 eq 443\n deny ip any host 192.168.30.5\n permit ip any any\n!\ninterface GigabitEthernet0/1\n ip access-group FINANCE-TO-SERVER in",
+      "explanation": "Extended ACL placed close to the source (Finance subnet) — matches the best-placement rule exactly."
+    },
+    {
+      "title": "Editing a Named ACL in place",
+      "code": "ip access-list extended FINANCE-TO-SERVER\n no 20                                                          ! remove line 20 only\n 15 permit tcp 192.168.20.0 0.0.0.255 host 192.168.30.5 eq 22   ! insert a new line at sequence 15",
+      "explanation": "Named ACLs support per-line edits via sequence numbers; numbered (old-style) ACLs have no sequence numbers and usually require rewriting the whole list."
+    },
+    {
+      "title": "Rule ordering — specific before general (worked)",
+      "code": "! WRONG — general rule first, so the specific deny never triggers\n10 permit ip 192.168.10.0 0.0.0.255 any\n20 deny ip host 192.168.10.5 any\n!\n! CORRECT — specific rule before general\n10 deny ip host 192.168.10.5 any\n20 permit ip 192.168.10.0 0.0.0.255 any",
+      "explanation": "Goal: block one host (192.168.10.5) from reaching a server while allowing the rest of the subnet. First-match logic means the specific deny must precede the broad permit."
+    },
+    {
+      "title": "Wildcard mask worked examples",
+      "code": "/24  Mask 255.255.255.0   -> Wildcard 0.0.0.255\n/26  Mask 255.255.255.192 -> Wildcard 0.0.0.63",
+      "explanation": "Subtract each subnet-mask byte from 255 to get the wildcard. Writing the subnet mask instead of the wildcard in an ACL command produces the exact opposite of the intended result — the most dangerous common mistake."
+    }
+  ],
+
+  "troubleshooting": [
+    {
+      "symptom": "A broad 'permit any' placed before a specific 'deny' — the deny never triggers.",
+      "cause": "First-match logic stops at the earlier, broader permit.",
+      "fix": "Reorder so specific statements (e.g. deny host X) come before general ones (e.g. permit subnet)."
+    },
+    {
+      "symptom": "The ACL has no effect, or it blocks the wrong traffic.",
+      "cause": "Wrong interface, or wrong direction (in/out), applied.",
+      "fix": "Verify with show ip interface; apply the ACL to the correct interface and direction."
+    },
+    {
+      "symptom": "A source is blocked from ALL destinations, not just the intended one.",
+      "cause": "A Standard ACL was placed near the source (it can only match source IP).",
+      "fix": "Place Standard ACLs near the destination; use an Extended ACL near the source when destination-specific filtering is needed."
+    },
+    {
+      "symptom": "Unsure which rule the traffic is actually hitting.",
+      "cause": "No per-rule visibility.",
+      "fix": "Add the 'log' keyword to an ACE, and read match counters via show ip access-lists."
+    },
+    {
+      "symptom": "A router's own self-originated traffic is not being filtered by an outbound ACL.",
+      "cause": "Routers do NOT filter self-originated traffic with outbound ACLs.",
+      "fix": "Filter such traffic at the receiving device or via other controls — don't rely on an outbound ACL on the originating router."
+    },
+    {
+      "symptom": "An OSPF (or other routing-protocol) neighbor relationship breaks after applying an inbound ACL.",
+      "cause": "The inbound ACL silently drops routing-protocol hello packets because they aren't explicitly permitted.",
+      "fix": "Add an explicit permit for the routing protocol (e.g. OSPF) to the inbound ACL; check show ip access-lists match counters."
+    },
+    {
+      "symptom": "The ACL produces the exact opposite of the intended result.",
+      "cause": "The regular subnet mask was written where a wildcard mask was required.",
+      "fix": "Convert to a wildcard (255 minus each subnet-mask byte): e.g. /26 -> 0.0.0.63, not 255.255.255.192."
+    }
+  ],
+
+  "best_practices": [
+    "Put specific statements at the top of the ACL.",
+    "Use 'remark' to document the intent of each ACL.",
+    "Disable the ACL on the interface before making major edits."
+  ],
+
+  "security_notes": [
+    "Implicit deny means an ACL containing only 'deny' statements blocks ALL traffic — a common accidental lockout."
+  ],
+
+  "interview_questions": [
+    "Why use named vs. numbered ACLs?",
+    "What does the 'established' keyword do in extended ACLs?",
+    "How do you delete one line from a numbered ACL without deleting it all?",
+    "Where should a standard ACL be placed?"
+  ],
+
+  "exam_traps": [
+    "Wildcard math errors (e.g., /25 needs 0.0.0.127, not 0.0.0.255).",
+    "Matching a single host requires the 'host' keyword or a 0.0.0.0 wildcard.",
+    "Forgetting the implicit deny.",
+    "Writing a subnet mask where a wildcard mask is required — produces the opposite result."
+  ],
+
+  "enterprise_notes": [
+    "In WAN scenarios (OSPF over MPLS + NAT + ACL), an inbound ACL blocking OSPF hello packets is a common root cause of neighbor-relationship failure — check show ip access-lists match counters as part of the troubleshooting chain."
+  ],
+
+  "related_topics": ["nat", "ospf", "port_security", "dhcp_snooping_dai"],
+  "difficulty": "Hard",
+  "keywords": ["ACE", "Wildcard Mask", "Implicit Deny", "First-Match", "Named ACL"],
+  "tags": ["ACL", "Security", "CCNA-Chapter2-3"]
+}

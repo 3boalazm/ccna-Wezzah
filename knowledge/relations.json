@@ -1,0 +1,121 @@
+{
+  "_meta": {
+    "purpose": "Defines which topics should be pulled in together when a user studies/is-quizzed-on a given topic. Consumed by Question Engine (direct relations) and Troubleshooting Engine (scenario topic sets).",
+    "note": "Only includes topics with actual source content from the uploaded chapters. VLAN/Trunk/DTP/STP/EtherChannel are NOT included as full nodes since no source content exists for them yet — they appear only as 'gap' placeholders where the source material itself referenced them."
+  },
+
+  "ospf": {
+    "direct": ["acl", "nat", "wan_architecture", "routing_table"],
+    "reason": "OSPF Hello packets can be blocked by inbound ACLs; the classic branch-office scenario chains OSPF+NAT+ACL together; OSPF is the core protocol underlying WAN Architecture's MPLS discussion."
+  },
+
+  "acl": {
+    "direct": ["nat", "ospf", "port_security", "dhcp_snooping_dai"],
+    "reason": "ACLs gate NAT-eligible traffic, can break OSPF adjacency if misapplied, and sit conceptually alongside other traffic-filtering/security mechanisms like Port Security and DAI."
+  },
+
+  "nat": {
+    "direct": ["acl", "ospf", "dhcp"],
+    "reason": "NAT commands reference ACLs to define translated traffic; appears with OSPF in the branch-connectivity troubleshooting chain; both NAT and DHCP are core IP Services topics often tested together."
+  },
+
+  "dhcp": {
+    "direct": ["dhcp_snooping_dai", "dns", "nat"],
+    "reason": "DHCP Snooping is a direct security extension of DHCP; DNS and DHCP are commonly paired as core IP Services; NAT and DHCP are grouped as IP Services fundamentals."
+  },
+
+  "dhcp_snooping_dai": {
+    "direct": ["dhcp", "port_security", "acl"],
+    "reason": "DAI depends entirely on the DHCP Snooping binding table; Port Security and DHCP Snooping are both Layer-2 'First Hop Security' features commonly tested as a set; ACL is the general filtering concept they both extend."
+  },
+
+  "port_security": {
+    "direct": ["dhcp_snooping_dai", "acl"],
+    "reason": "Both are Layer-2 security controls typically taught and tested together as 'First Hop Security'."
+  },
+
+  "dns": {
+    "direct": ["dhcp", "ntp"],
+    "reason": "DNS and DHCP are core IP Services taught together; NTP shares the 'device management protocols' chapter with DNS."
+  },
+
+  "snmp": {
+    "direct": ["ntp", "syslog", "fhrp"],
+    "reason": "SNMP, NTP, and Syslog are the three pillars of the Device Management Protocols chapter; SNMP and FHRP (HSRP/VRRP/GLBP) share the 'Miscellaneous IP Services' chapter."
+  },
+
+  "ntp": {
+    "direct": ["syslog", "snmp", "dns"],
+    "reason": "NTP's stratum/time-sync accuracy is a prerequisite for meaningful Syslog timestamps; all three (NTP/Syslog/SNMP) are grouped under device management."
+  },
+
+  "syslog": {
+    "direct": ["ntp", "snmp"],
+    "reason": "Same device-management-protocols grouping; NTP accuracy directly affects Syslog log correlation across devices."
+  },
+
+  "fhrp": {
+    "direct": ["snmp", "routing_table"],
+    "reason": "FHRP (HSRP/VRRP/GLBP) shares the Miscellaneous IP Services chapter with SNMP; FHRP directly concerns default-gateway/routing resiliency."
+  },
+
+  "wireless": {
+    "direct": ["sda", "security"],
+    "reason": "DNA Center (SDA's controller) unifies wired and wireless management, discovering WLCs; wireless security (WPA2/WPA3) is a direct extension of general Security topics."
+  },
+
+  "security": {
+    "direct": ["port_security", "dhcp_snooping_dai", "acl", "wireless"],
+    "reason": "AAA/TACACS+/RADIUS/device-hardening concepts underpin all the specific enforcement mechanisms: Port Security, DAI, ACL, and Wireless encryption."
+  },
+
+  "automation": {
+    "direct": ["sdn", "sda"],
+    "reason": "REST/JSON/YAML and Ansible/Puppet/Chef are the toolchain for automating SDN/SDA-managed networks; conceptually inseparable in the source material."
+  },
+
+  "sdn": {
+    "direct": ["sda", "automation", "cloud"],
+    "reason": "SDA is Cisco's concrete SDN implementation; automation is how SDN networks are operated; Cloud shares the 'controller-based/abstracted infrastructure' theme."
+  },
+
+  "sda": {
+    "direct": ["sdn", "wireless", "automation"],
+    "reason": "SDA is SDN applied to campus networks; DNA Center (SDA's controller) also manages wireless; automation tools configure SDA fabrics."
+  },
+
+  "cloud": {
+    "direct": ["sdn", "wan_architecture"],
+    "reason": "Cloud service models (IaaS/PaaS/SaaS) share the 'abstracted/controller-based infrastructure' theme with SDN; WAN Architecture (MetroE/MPLS/VPN) is how enterprises typically connect to cloud providers."
+  },
+
+  "wan_architecture": {
+    "direct": ["ospf", "nat", "cloud", "qos"],
+    "reason": "OSPF-over-MPLS is a core WAN scenario; NAT is needed for WAN/internet edge connectivity; Cloud connectivity typically traverses WAN links; QoS is critical on bandwidth-constrained WAN links."
+  },
+
+  "lan_architecture": {
+    "direct": ["qos", "port_security"],
+    "reason": "PoE (LAN Architecture) powers devices like IP phones that are QoS-sensitive; LAN access-layer design intersects with Port Security placement."
+  },
+
+  "qos": {
+    "direct": ["wan_architecture", "lan_architecture"],
+    "reason": "QoS is most critical on constrained WAN links; PoE-powered devices (phones/APs) in LAN Architecture are the typical QoS use case (voice/video)."
+  },
+
+  "ipv6": {
+    "direct": ["routing_table", "acl"],
+    "reason": "IPv6 has its own ACL variant and routing considerations (ipv6 unicast-routing, OSPFv3 mentioned as using Link-Local); grouped with core routing/filtering topics."
+  },
+
+  "routing_table": {
+    "direct": ["ospf", "fhrp", "ipv6"],
+    "reason": "The routing table is populated by OSPF's SPF calculation; FHRP concerns default-gateway resiliency which is closely tied to routing table concepts; IPv6 has its own routing table (show ipv6 route)."
+  },
+
+  "_gaps_referenced_but_not_sourced": {
+    "topics": ["vlan", "trunk", "dtp", "stp", "etherchannel", "ipv6_deep_addressing_beyond_slaac"],
+    "note": "These appear in the target CCNA hierarchy and are referenced by the source material itself (e.g., 'covered in Volume 1'), but no actual content exists in the uploaded chapters. Do NOT build Question Engine or Troubleshooting Engine content for these until source material is provided - placeholder nodes only, to preserve the hierarchy shape."
+  }
+}
