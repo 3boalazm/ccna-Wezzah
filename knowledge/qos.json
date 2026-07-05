@@ -1,0 +1,95 @@
+{
+  "topic_id": "qos",
+  "path": [
+    "CCNA",
+    "Architecture",
+    "QoS"
+  ],
+  "source_docs": [
+    "Doc2-CCNA-Ch11-20",
+    "Doc9-Stage6-Automation"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "default_values",
+    "timers",
+    "protocol_numbers",
+    "debug_commands",
+    "config_commands",
+    "verification_commands"
+  ],
+  "overview": "Quality of Service (QoS) manages Bandwidth, Delay, Jitter, and Loss so that latency-sensitive traffic like voice and video get the treatment they need on a congested or bandwidth-constrained link.",
+  "definitions": [
+    "Bandwidth: link speed/capacity in bits per second.",
+    "Delay: time required for a packet to cross the network.",
+    "Jitter: variation in delay between received packets.",
+    "Loss: percentage of packets that fail to arrive.",
+    "Trust Boundary: the point in the network where QoS markings are trusted (ideally the ingress switch or IP phone)."
+  ],
+  "core_concepts": [
+    "Per-Hop Behavior (PHB) sequence: Classification -> Marking -> Forwarding decision -> Queuing/Scheduling.",
+    "Policing discards or re-marks excess traffic (ingress or egress); Shaping queues/delays packets to smooth them to a target rate (egress only)."
+  ],
+  "protocol_operation": [
+    "Packet enters an interface (ingress).",
+    "Device classifies it by matching header fields.",
+    "Device marks it (e.g. sets DSCP).",
+    "Router makes a forwarding decision.",
+    "Packet is queued/scheduled for transmission according to its class."
+  ],
+  "packet_flow": "Ingress -> Classification (match fields) -> Marking (e.g. DSCP set) -> Forwarding decision -> Queuing/Scheduling -> Egress, prioritized per its assigned class.",
+  "header_fields": [
+    "IPv4 ToS byte: IP Precedence (3 bits) or DSCP (6 bits).",
+    "802.1Q header: CoS/PCP (3 bits).",
+    "MPLS label: EXP bits (3 bits).",
+    "802.11 header: TID (3 bits)."
+  ],
+  "default_values": [],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [],
+  "best_practices": [
+    "Set the Trust Boundary as close to the traffic source as possible (ingress switch port or the IP phone itself).",
+    "Use Policing on ingress and Shaping on egress, matching each tool's intended location."
+  ],
+  "security_notes": [],
+  "interview_questions": [
+    "Explain the difference between Policing and Shaping.",
+    "Why does CoS get lost when a packet crosses a router?",
+    "What are the voice traffic requirements for delay, jitter, and loss?"
+  ],
+  "exam_traps": [
+    "Forgetting that CoS (802.1Q, Layer 2) does not survive a Layer 3 hop — DSCP (IP header) does.",
+    "Mixing up Policing (discard/re-mark) with Shaping (delay/queue)."
+  ],
+  "enterprise_notes": [
+    "Voice: <150ms delay, <30ms jitter, <1% loss. Video: 384Kbps-20+Mbps bandwidth, 200-400ms delay, 30-50ms jitter, 0.1-1% loss. EF (DSCP 46) is standard marking for voice."
+  ],
+  "related_topics": [
+    "wan_architecture",
+    "lan_architecture"
+  ],
+  "difficulty": "Hard",
+  "keywords": [
+    "DSCP",
+    "CoS",
+    "EF",
+    "AF",
+    "Policing",
+    "Shaping",
+    "Trust Boundary",
+    "Jitter"
+  ],
+  "tags": [
+    "Architecture",
+    "QoS"
+  ],
+  "last_updated": "2026-07-05"
+}

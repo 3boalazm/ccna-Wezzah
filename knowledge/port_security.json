@@ -1,0 +1,135 @@
+{
+  "topic_id": "port_security",
+  "path": [
+    "CCNA",
+    "Switching",
+    "Port Security"
+  ],
+  "source_docs": [
+    "Doc1-CCNA-Ch1-10",
+    "Doc7-Stage4-L2Security"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "port_numbers",
+    "timers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "Port Security restricts which devices may use a switch port, based on source MAC address, protecting against unauthorized devices and basic MAC-flooding style attacks.",
+  "definitions": [
+    "Sticky learning: dynamically learned MAC addresses are automatically added into the running-config.",
+    "Maximum: the number of MAC addresses allowed on a secured port (default 1).",
+    "err-disabled: the state a port enters after a Shutdown-mode violation; it stays down until manually recovered."
+  ],
+  "core_concepts": [
+    "Violation modes: Shutdown (default — port goes err-disabled, logs sent), Restrict (drops offending traffic, increments counter, sends SNMP/Syslog), Protect (drops offending traffic silently, no logging).",
+    "Sticky MAC addresses are only persisted if the running-config is saved; otherwise they are lost on reload."
+  ],
+  "protocol_operation": [
+    "Switch learns the first MAC(s) seen on the port up to the configured maximum.",
+    "Any additional, unrecognized MAC triggers the configured violation action."
+  ],
+  "packet_flow": "Frame arrives on a secured port -> switch checks source MAC against the port's secured MAC table -> known/under max: forwarded normally -> new MAC beyond max: violation action taken per configured mode.",
+  "header_fields": [],
+  "default_values": [
+    "Maximum secure MAC addresses per port: 1.",
+    "Default violation mode: Shutdown."
+  ],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [
+    {
+      "command": "switchport port-security",
+      "purpose": "Enable port security on the interface."
+    },
+    {
+      "command": "switchport port-security maximum [value]",
+      "purpose": "Set the maximum number of secure MAC addresses."
+    },
+    {
+      "command": "switchport port-security mac-address sticky",
+      "purpose": "Enable sticky learning of MAC addresses into the running-config."
+    },
+    {
+      "command": "switchport port-security violation {shutdown | restrict | protect}",
+      "purpose": "Set the violation mode."
+    }
+  ],
+  "verification_commands": [
+    {
+      "command": "show port-security interface [id]",
+      "purpose": "Show violation mode, max, count, and last violating MAC for a port."
+    },
+    {
+      "command": "show mac address-table secure",
+      "purpose": "Show the table of secured MAC addresses."
+    }
+  ],
+  "show_commands": [
+    {
+      "command": "show port-security interface [id]",
+      "purpose": "Primary verification command for port security state."
+    }
+  ],
+  "debug_commands": [],
+  "cli_examples": [
+    {
+      "title": "Recovering an err-disabled port",
+      "code": "interface GigabitEthernet0/1\n shutdown\n no shutdown",
+      "explanation": "Required specifically when violation mode is Shutdown — Restrict/Protect never take the port down, so recovery is unnecessary in those modes."
+    }
+  ],
+  "config_examples": [
+    {
+      "title": "Typical access-port lockdown",
+      "code": "interface GigabitEthernet0/5\n switchport mode access\n switchport port-security\n switchport port-security maximum 1\n switchport port-security mac-address sticky\n switchport port-security violation shutdown"
+    }
+  ],
+  "troubleshooting": [
+    {
+      "symptom": "Interface is err-disabled; show port-security interface shows Violation Mode = Shutdown, Violation Count = 1.",
+      "cause": "An unauthorized second device (often a small unmanaged switch) was connected, exceeding the configured maximum.",
+      "fix": "Identify and remove the extra device, then 'shutdown' / 'no shutdown' the interface to recover — required only because the mode is Shutdown."
+    }
+  ],
+  "best_practices": [
+    "Shut down all unused switch ports and place them in a dummy/unused VLAN.",
+    "Save the running-config after sticky MAC addresses are learned, or they will be lost on reboot."
+  ],
+  "security_notes": [
+    "Port Security defends the access layer against unauthorized device connections and basic MAC-flooding, but is not a substitute for 802.1X-style authentication."
+  ],
+  "interview_questions": [
+    "Explain the difference between Restrict and Protect violation modes.",
+    "Why must you manually recover a port after a Shutdown-mode violation?",
+    "What happens to sticky-learned MACs if the switch reloads without a 'write'?"
+  ],
+  "exam_traps": [
+    "Forgetting to save the running-config after sticky learning — addresses are lost on reboot.",
+    "Assuming any violation mode auto-recovers the port — only errdisable recovery features (not covered here) or manual shut/no-shut do."
+  ],
+  "enterprise_notes": [
+    "Commonly deployed as a baseline hardening control on every wired access port in enterprise switching designs."
+  ],
+  "related_topics": [
+    "dhcp_snooping_dai",
+    "acl"
+  ],
+  "difficulty": "Medium",
+  "keywords": [
+    "Sticky MAC",
+    "Violation Mode",
+    "err-disable",
+    "Maximum MAC"
+  ],
+  "tags": [
+    "Security",
+    "Switching",
+    "Layer2"
+  ],
+  "last_updated": "2026-07-05"
+}

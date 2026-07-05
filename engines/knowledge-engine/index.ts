@@ -3,7 +3,7 @@
 // loader.ts directly outside this folder — go through here.
 
 import type { KnowledgeModule } from "./types";
-import { getCachedTopic, getRelations, loadKnowledgeBase } from "./loader";
+import { getAllCachedTopics, getCachedTopic, getRelations, loadKnowledgeBase } from "./loader";
 
 export async function init(): Promise<void> {
   await loadKnowledgeBase();
@@ -27,14 +27,31 @@ export function listRelated(topicId: string): string[] {
   return relations[topicId]?.direct ?? [];
 }
 
-// Deferred (Phase E): params underscore-prefixed to mark them intentionally
-// unused until the body is implemented. The exported signature is unchanged.
-export function searchByTag(_tag: string): KnowledgeModule[] {
-  // TODO(implementation): iterate cache, filter by tags.includes(tag)
-  throw new Error("Not implemented — Phase E");
+export function searchByTag(tag: string): KnowledgeModule[] {
+  const needle = tag.trim().toLowerCase();
+  return getAllCachedTopics().filter((m) => m.tags.some((t) => t.toLowerCase() === needle));
 }
 
-export function searchByKeyword(_keyword: string): KnowledgeModule[] {
-  // TODO(implementation): iterate cache, filter by keywords.includes(keyword)
-  throw new Error("Not implemented — Phase E");
+export function searchByKeyword(keyword: string): KnowledgeModule[] {
+  const needle = keyword.trim().toLowerCase();
+  return getAllCachedTopics().filter((m) =>
+    m.keywords.some((k) => k.toLowerCase().includes(needle))
+  );
+}
+
+// Free-text search across overview + keywords + tags — used by the
+// Sidebar's search box so it can match on content, not just topic_id.
+export function searchByText(query: string): KnowledgeModule[] {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return getAllCachedTopics();
+  return getAllCachedTopics().filter((m) => {
+    const haystack = [m.topic_id, m.overview, ...m.keywords, ...m.tags]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(needle);
+  });
+}
+
+export function listAllTopicIds(): string[] {
+  return getAllCachedTopics().map((m) => m.topic_id);
 }

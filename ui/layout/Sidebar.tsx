@@ -93,6 +93,7 @@ export default function Sidebar({
                     type="button"
                     onClick={() => onSelectTopic(t)}
                     aria-current={t === activeTopicId ? "page" : undefined}
+                    className="ccna-transition-all"
                     style={{
                       ...S.item,
                       ...(t === activeTopicId ? S.itemActive : null),
@@ -120,6 +121,7 @@ export default function Sidebar({
             type="button"
             onClick={() => onSelectEngine?.(e.id)}
             aria-current={e.id === activeEngine ? "page" : undefined}
+            className="ccna-transition-all"
             style={{
               ...S.item,
               ...(e.id === activeEngine ? S.itemActive : null),

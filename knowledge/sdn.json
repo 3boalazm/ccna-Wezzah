@@ -1,0 +1,85 @@
+{
+  "topic_id": "sdn",
+  "path": [
+    "CCNA",
+    "Automation",
+    "SDN"
+  ],
+  "source_docs": [
+    "Doc9-Stage6-Automation",
+    "Doc2-CCNA-Ch11-20"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "port_numbers",
+    "timers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "Software-Defined Networking (SDN) separates a device's traditional functions into three planes and centralizes the Control Plane in a controller, enabling programmatic, API-driven network management instead of box-by-box CLI configuration.",
+  "definitions": [
+    "Data Plane: forwards packets (de-encapsulation, re-encapsulation, table lookups).",
+    "Control Plane: decides how to forward (routing protocols, ARP, STP, MAC learning) — moved to a central controller in SDN.",
+    "Management Plane: device access/control (SSH, SNMP, Syslog).",
+    "Southbound Interface (SBI): controller-to-device (OpenFlow, OpFlex, NETCONF, CLI, SNMP).",
+    "Northbound Interface (NBI): controller-to-application, typically REST APIs."
+  ],
+  "core_concepts": [
+    "SDN's core idea is centralizing the Control Plane in a controller so devices become simpler, controller-driven forwarders.",
+    "Spine-Leaf (Clos) topology: every Leaf switch connects to every Spine switch; Leaf switches never connect directly to each other — the standard modern data-center design."
+  ],
+  "protocol_operation": [
+    "Controller pushes forwarding/control decisions to devices via the Southbound Interface.",
+    "Applications query/program the controller via the Northbound Interface (typically REST)."
+  ],
+  "packet_flow": "Application -> Northbound API (REST) -> SDN Controller -> Southbound protocol (OpenFlow/OpFlex/NETCONF) -> managed device's Data Plane forwards packets accordingly.",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [],
+  "best_practices": [
+    "Use a Spine-Leaf topology for new data-center fabrics to guarantee predictable, non-blocking east-west bandwidth."
+  ],
+  "security_notes": [],
+  "interview_questions": [
+    "Explain the three network planes and how SDN redistributes them.",
+    "What's the difference between a Southbound and a Northbound interface?",
+    "Why do Leaf switches never connect directly to each other in a Spine-Leaf design?"
+  ],
+  "exam_traps": [
+    "Confusing Southbound (controller-to-device) with Northbound (controller-to-application) direction."
+  ],
+  "enterprise_notes": [
+    "Cisco SDA is the concrete Cisco implementation of these SDN concepts applied to campus networking."
+  ],
+  "related_topics": [
+    "sda",
+    "automation",
+    "cloud"
+  ],
+  "difficulty": "Medium",
+  "keywords": [
+    "Data Plane",
+    "Control Plane",
+    "Management Plane",
+    "Southbound",
+    "Northbound",
+    "Spine-Leaf"
+  ],
+  "tags": [
+    "Automation",
+    "SDN",
+    "Data-Center"
+  ],
+  "last_updated": "2026-07-05"
+}

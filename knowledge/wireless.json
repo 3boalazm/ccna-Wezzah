@@ -1,0 +1,90 @@
+{
+  "topic_id": "wireless",
+  "path": [
+    "CCNA",
+    "Wireless",
+    "WLAN Architecture"
+  ],
+  "source_docs": [
+    "Doc8-Stage5-Wireless"
+  ],
+  "completeness": "partial",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "port_numbers",
+    "timers",
+    "protocol_numbers",
+    "debug_commands",
+    "config_commands",
+    "verification_commands",
+    "show_commands"
+  ],
+  "overview": "CCNA wireless coverage in this material focuses on architecture and management (SOHO vs. enterprise, WLC, CAPWAP) rather than 802.11 protocol/encryption detail, which the source notes is covered in an earlier, separate volume.",
+  "definitions": [
+    "Autonomous AP: an access point that creates and fully controls its own WLAN independently, with no central controller (typical of SOHO).",
+    "CAPWAP: the protocol used to tunnel traffic between lightweight APs and a WLC in enterprise (SDA) architectures.",
+    "WLC (Wireless LAN Controller): the central device managing lightweight APs in an enterprise wireless deployment."
+  ],
+  "core_concepts": [
+    "SOHO architecture: a single integrated device acts as router, switch, AP, and firewall; the AP is Autonomous and does not use CAPWAP because there is no WLC to tunnel to.",
+    "Enterprise/SDA architecture: lightweight APs tunnel client traffic to a WLC using CAPWAP; DNA Center can discover WLCs and display them on the topology map, unifying wired and wireless management."
+  ],
+  "protocol_operation": [
+    "SOHO: Autonomous AP receives 802.11 frames from wireless clients and converts them directly to 802.3 Ethernet frames onto the wired network — no CAPWAP tunnel involved.",
+    "Enterprise: lightweight AP encapsulates client traffic in CAPWAP and forwards it to the WLC for processing/policy."
+  ],
+  "packet_flow": "SOHO: Wireless client (802.11) -> Autonomous AP -> converted to 802.3 Ethernet -> wired LAN, no controller involved. Enterprise: Wireless client (802.11) -> Lightweight AP -> CAPWAP tunnel -> WLC -> policy applied -> wired network / DNA Center visibility.",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [
+    {
+      "symptom": "A newly installed AP in a small SOHO office is powered on, but devices can't see its SSID.",
+      "cause": "In SOHO architecture, an Autonomous AP does not use CAPWAP or depend on a WLC — the SSID issue is local to the AP's own standalone configuration/radio, not a controller-tunnel problem.",
+      "fix": "Verify the AP's own standalone SSID/radio configuration directly; there is no WLC or CAPWAP tunnel to troubleshoot in this architecture."
+    }
+  ],
+  "best_practices": [
+    "Use DNA Center as the single management plane when the deployment mixes wired SDA and wireless WLC/AP infrastructure."
+  ],
+  "security_notes": [
+    "Deep-dive 802.11 encryption/authentication detail (WPA2/WPA3 mechanics) is explicitly out of scope for this material — flagged as covered in an earlier volume."
+  ],
+  "interview_questions": [
+    "Why doesn't a SOHO Access Point use CAPWAP?",
+    "What is the architectural difference between an Autonomous AP and a Lightweight AP?",
+    "What role does DNA Center play in a converged wired/wireless network?"
+  ],
+  "exam_traps": [
+    "Assuming every AP uses CAPWAP — only lightweight APs paired with a WLC do; Autonomous APs never do."
+  ],
+  "enterprise_notes": [
+    "Cisco SDA's converged wired+wireless management (via DNA Center) is positioned as the modern enterprise campus design versus standalone SOHO gear."
+  ],
+  "related_topics": [
+    "sda",
+    "security"
+  ],
+  "difficulty": "Medium",
+  "keywords": [
+    "Autonomous AP",
+    "Lightweight AP",
+    "CAPWAP",
+    "WLC",
+    "SOHO"
+  ],
+  "tags": [
+    "Wireless",
+    "Architecture"
+  ],
+  "last_updated": "2026-07-05"
+}

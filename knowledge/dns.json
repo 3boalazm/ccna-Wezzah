@@ -1,0 +1,81 @@
+{
+  "topic_id": "dns",
+  "path": [
+    "CCNA",
+    "IP Services",
+    "DNS"
+  ],
+  "source_docs": [
+    "Doc6-Stage3-DeviceMgmt"
+  ],
+  "completeness": "partial",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "timers",
+    "protocol_numbers",
+    "debug_commands",
+    "config_examples"
+  ],
+  "overview": "DNS (Domain Name System) translates human-readable hostnames (e.g. www.cisco.com) into IP addresses, acting as the Internet's directory service.",
+  "definitions": [
+    "Recursive DNS: a local resolver server that performs the full lookup on the client's behalf, querying Root and TLD servers as needed until it finds the answer."
+  ],
+  "core_concepts": [
+    "When a user enters a URI, the device sends a DNS query (UDP port 53) to a configured DNS server to resolve it to a numeric IP address before any connection can be made."
+  ],
+  "protocol_operation": [
+    "Client sends a DNS query for a hostname.",
+    "Local Recursive DNS server queries Root, then TLD, then authoritative servers as needed.",
+    "Resolved IP address is returned to the client, which then connects using that address."
+  ],
+  "packet_flow": "Client -> DNS query (UDP 53) -> Recursive DNS server -> (Root -> TLD -> Authoritative, if not cached) -> IP address returned -> Client uses IP for the actual connection (e.g. HTTP/HTTPS).",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [
+    "DNS: UDP/TCP port 53."
+  ],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [
+    {
+      "symptom": "A browser can ping a server by IP but cannot load the page by name.",
+      "cause": "DNS resolution failure — the hostname cannot be resolved even though basic IP connectivity works.",
+      "fix": "Verify the client's configured DNS server, and that UDP 53 is reachable/not filtered."
+    }
+  ],
+  "best_practices": [
+    "Configure at least two DNS servers on clients/routers for redundancy."
+  ],
+  "security_notes": [],
+  "interview_questions": [
+    "What is the difference between a recursive and an authoritative DNS server?",
+    "What happens at the network level between typing a URL and the page loading?"
+  ],
+  "exam_traps": [
+    "Confusing DNS (name resolution) with DHCP (address assignment) — they are frequently tested together but solve different problems."
+  ],
+  "enterprise_notes": [],
+  "related_topics": [
+    "dhcp",
+    "ntp"
+  ],
+  "difficulty": "Easy",
+  "keywords": [
+    "Recursive DNS",
+    "Hostname Resolution",
+    "Root Server",
+    "TLD"
+  ],
+  "tags": [
+    "IP-Services",
+    "DNS"
+  ],
+  "last_updated": "2026-07-05"
+}

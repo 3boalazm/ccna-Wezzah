@@ -1,0 +1,76 @@
+{
+  "topic_id": "fhrp",
+  "path": [
+    "CCNA",
+    "Routing",
+    "FHRP"
+  ],
+  "source_docs": [
+    "Doc2-CCNA-Ch11-20"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "timers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "FHRP (First Hop Redundancy Protocol) provides a virtual IP and virtual MAC address shared across redundant routers, so hosts keep a single, stable default gateway even if the active router fails.",
+  "definitions": [
+    "Active router (HSRP): the router currently responding to ARP requests for the virtual IP with the virtual MAC.",
+    "Standby router (HSRP): listens for hellos from the Active router and takes over if it fails."
+  ],
+  "core_concepts": [
+    "HSRP and VRRP both use an Active/Standby model with per-subnet load balancing (only one router forwards per subnet at a time).",
+    "GLBP uses an Active/Active model, load-balancing per host in round-robin fashion across multiple routers."
+  ],
+  "protocol_operation": [
+    "Active router answers ARP requests for the virtual IP with the virtual MAC.",
+    "Standby router listens for periodic hellos; if hellos stop, it becomes Active."
+  ],
+  "packet_flow": "Host ARPs for the default gateway's virtual IP -> Active router replies with the virtual MAC -> host sends traffic to the virtual MAC -> Active router forwards it -> if Active fails, Standby detects missed hellos and takes over the virtual IP/MAC seamlessly.",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [],
+  "best_practices": [
+    "Use GLBP instead of HSRP/VRRP when you specifically need active/active load balancing across redundant gateways."
+  ],
+  "security_notes": [],
+  "interview_questions": [
+    "Compare the load-balancing model of HSRP/VRRP versus GLBP.",
+    "What does the Standby router do while the Active router is healthy?"
+  ],
+  "exam_traps": [
+    "Assuming HSRP naturally load-balances traffic across both routers — it does not; only one router forwards per subnet in HSRP/VRRP."
+  ],
+  "enterprise_notes": [
+    "FHRP is standard on any redundant distribution-layer pair providing default gateway service to access-layer VLANs."
+  ],
+  "related_topics": [
+    "snmp",
+    "routing_table"
+  ],
+  "difficulty": "Medium",
+  "keywords": [
+    "HSRP",
+    "VRRP",
+    "GLBP",
+    "Virtual IP",
+    "Active/Standby"
+  ],
+  "tags": [
+    "Routing",
+    "Redundancy"
+  ],
+  "last_updated": "2026-07-05"
+}

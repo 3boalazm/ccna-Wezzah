@@ -1,0 +1,106 @@
+{
+  "topic_id": "ntp",
+  "path": [
+    "CCNA",
+    "IP Services",
+    "NTP"
+  ],
+  "source_docs": [
+    "Doc2-CCNA-Ch11-20",
+    "Doc6-Stage3-DeviceMgmt"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "port_numbers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "NTP (Network Time Protocol) synchronizes clocks across all network devices — essential for correlating Syslog entries and troubleshooting events across multiple devices.",
+  "definitions": [
+    "Stratum: a hierarchical measure of time-source accuracy — 0 is a reference clock (e.g. atomic/GPS), and accuracy decreases as the stratum number increases."
+  ],
+  "core_concepts": [
+    "'ntp master' makes a device act as the time source for others.",
+    "'ntp server' makes a device synchronize from an external source while also being able to serve time to other devices."
+  ],
+  "protocol_operation": [
+    "A device configured with 'ntp server [address]' periodically queries that source and adjusts its own clock to match."
+  ],
+  "packet_flow": "Local router -> ntp server [address] -> external/authoritative NTP source -> clock offset calculated -> local clock adjusted -> local router can now serve time to downstream devices.",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [
+    {
+      "command": "ntp server [address]",
+      "purpose": "Synchronize the device's clock from the specified NTP source."
+    },
+    {
+      "command": "ntp master [stratum]",
+      "purpose": "Configure the device itself as an authoritative time source."
+    },
+    {
+      "command": "ntp source [interface]",
+      "purpose": "Set which interface's IP address is used as the source for outgoing NTP packets."
+    }
+  ],
+  "verification_commands": [
+    {
+      "command": "show ntp status",
+      "purpose": "Verify synchronization state and stratum."
+    },
+    {
+      "command": "show ntp associations",
+      "purpose": "Show configured NTP peers/servers and sync status."
+    }
+  ],
+  "show_commands": [
+    {
+      "command": "show ntp status",
+      "purpose": "Primary NTP verification command."
+    }
+  ],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [
+    {
+      "title": "Basic NTP client config",
+      "code": "ntp server 132.163.97.1\nntp source Loopback0"
+    }
+  ],
+  "troubleshooting": [],
+  "best_practices": [
+    "Configure NTP on every device so that Syslog timestamps across the network can be correlated accurately."
+  ],
+  "security_notes": [],
+  "interview_questions": [
+    "What does 'Stratum' mean in NTP, and why does a lower number mean better accuracy?",
+    "Why is NTP considered a prerequisite for effective Syslog troubleshooting?"
+  ],
+  "exam_traps": [
+    "Believing Stratum 0 is the worst accuracy — it is actually the best (reference clocks)."
+  ],
+  "enterprise_notes": [
+    "Enterprises typically point all devices at 2-3 internal NTP servers, which themselves sync from external Stratum 1/2 sources."
+  ],
+  "related_topics": [
+    "syslog",
+    "snmp",
+    "dns"
+  ],
+  "difficulty": "Easy",
+  "keywords": [
+    "Stratum",
+    "ntp master",
+    "ntp server",
+    "Time Synchronization"
+  ],
+  "tags": [
+    "IP-Services",
+    "Management"
+  ],
+  "last_updated": "2026-07-05"
+}

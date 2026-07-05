@@ -1,0 +1,92 @@
+{
+  "topic_id": "sda",
+  "path": [
+    "CCNA",
+    "Automation",
+    "Cisco SDA"
+  ],
+  "source_docs": [
+    "Doc5-Stage2-ACL-NAT",
+    "Doc2-CCNA-Ch11-20"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "port_numbers",
+    "timers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "Cisco Software-Defined Access (SDA) is Cisco's SDN implementation for campus/enterprise LANs, combining a physical Underlay, a VXLAN Overlay, and DNA Center as the central controller.",
+  "definitions": [
+    "Underlay: the physical network (routed access-layer switches) providing basic reachability.",
+    "Overlay: VXLAN tunnels carrying the actual endpoint data plane on top of the underlay.",
+    "Fabric: the combination of Underlay + Overlay.",
+    "LISP: the control-plane protocol SDA uses to discover endpoint locations.",
+    "RLOC (Routing Locator): the IP address of a fabric edge node in the underlay.",
+    "SGT (Scalable Group Tag): a 16-bit field (carried in VXLAN) used to apply security policy based on group membership instead of IP address."
+  ],
+  "core_concepts": [
+    "DNA Center is the single central controller for SDA, and can also discover WLCs, unifying wired and wireless management.",
+    "SGT-based security lets policy be applied by group rather than by managing large IP-based ACLs."
+  ],
+  "protocol_operation": [
+    "LISP resolves an endpoint's location to an RLOC in the underlay.",
+    "Traffic between fabric edge nodes is encapsulated in VXLAN across the underlay, carrying the endpoint's data plus its SGT."
+  ],
+  "packet_flow": "Endpoint traffic enters a Fabric Edge node -> LISP resolves the destination endpoint's RLOC -> traffic is VXLAN-encapsulated (carrying SGT) -> forwarded across the underlay to the destination Fabric Edge -> de-encapsulated and delivered, with SGT-based policy applied.",
+  "header_fields": [
+    "VXLAN header carries a 16-bit SGT field for group-based policy."
+  ],
+  "default_values": [],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [],
+  "best_practices": [
+    "Use SGT-based policy instead of large, IP-address-based ACLs when the design already runs on an SDA fabric."
+  ],
+  "security_notes": [
+    "SGT lets security policy scale with group membership rather than IP addressing, greatly simplifying ACL management in large fabrics."
+  ],
+  "interview_questions": [
+    "What are the three components of an SDA Fabric?",
+    "What problem does an SGT solve compared to traditional IP-based ACLs?",
+    "What role does LISP play in SDA?"
+  ],
+  "exam_traps": [
+    "Confusing NETCONF/RESTCONF (Southbound protocols DNA Center can use) with the SDA fabric's own data-plane protocol (VXLAN) and control-plane protocol (LISP)."
+  ],
+  "enterprise_notes": [
+    "SDA is the modern Cisco campus design pattern, replacing traditional VLAN-per-subnet designs with a fabric-based, policy-driven model."
+  ],
+  "related_topics": [
+    "sdn",
+    "wireless",
+    "automation"
+  ],
+  "difficulty": "Hard",
+  "keywords": [
+    "Underlay",
+    "Overlay",
+    "Fabric",
+    "LISP",
+    "RLOC",
+    "SGT",
+    "DNA Center",
+    "VXLAN"
+  ],
+  "tags": [
+    "Automation",
+    "SDN",
+    "Campus"
+  ],
+  "last_updated": "2026-07-05"
+}

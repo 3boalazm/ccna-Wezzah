@@ -1,0 +1,146 @@
+{
+  "topic_id": "dhcp_snooping_dai",
+  "path": [
+    "CCNA",
+    "Security",
+    "DHCP Snooping & DAI"
+  ],
+  "source_docs": [
+    "Doc1-CCNA-Ch1-10",
+    "Doc7-Stage4-L2Security"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "timers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "DHCP Snooping and Dynamic ARP Inspection (DAI) are Layer-2 'First Hop Security' features. DHCP Snooping blocks rogue DHCP servers and builds a binding table; DAI uses that same table to block ARP-spoofing / man-in-the-middle attacks.",
+  "definitions": [
+    "Trusted port: a DHCP Snooping port facing the legitimate DHCP server, allowed to send server messages (Offer/Ack).",
+    "Untrusted port: a port facing end users; server-only messages arriving here are dropped.",
+    "Binding table: the DHCP Snooping database of (MAC, IP, VLAN, Interface) for every legitimate DHCP-leased client.",
+    "Option 82: relay information some switches add to DHCP packets; must usually be disabled on switches not acting as DHCP relays."
+  ],
+  "core_concepts": [
+    "DHCP Snooping classifies ports Trusted (server side) or Untrusted (user side) and drops DHCPOFFER/DHCPACK arriving on untrusted ports.",
+    "DAI compares every ARP message on untrusted ports against the DHCP Snooping binding table; a MAC/IP mismatch means the packet is dropped.",
+    "DAI has no independent data source — it is entirely dependent on DHCP Snooping's binding table being populated."
+  ],
+  "protocol_operation": [
+    "DHCP Snooping inspects DHCP messages, builds the binding table from legitimate exchanges seen on trusted ports.",
+    "DAI intercepts ARP requests/replies on untrusted ports and validates MAC-to-IP mapping against the binding table before forwarding."
+  ],
+  "packet_flow": "Legitimate client DHCP exchange on trusted (server) port -> DHCP Snooping records (MAC, IP, VLAN, Port) in binding table -> later, an ARP packet arrives on an untrusted port -> DAI checks its MAC/IP against the binding table -> match: forwarded; mismatch: dropped (blocks ARP spoofing/MITM).",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [
+    {
+      "command": "ip dhcp snooping",
+      "purpose": "Globally enable DHCP Snooping on the switch."
+    },
+    {
+      "command": "ip dhcp snooping vlan [id]",
+      "purpose": "Enable DHCP Snooping for a specific VLAN."
+    },
+    {
+      "command": "ip dhcp snooping trust",
+      "purpose": "Mark an interface as trusted (server-facing)."
+    },
+    {
+      "command": "no ip dhcp snooping information option",
+      "purpose": "Disable Option 82 insertion on switches that are not acting as a DHCP relay."
+    },
+    {
+      "command": "ip arp inspection vlan [id]",
+      "purpose": "Enable Dynamic ARP Inspection for a VLAN."
+    },
+    {
+      "command": "ip arp inspection trust",
+      "purpose": "Mark an interface as trusted for ARP inspection."
+    },
+    {
+      "command": "ip arp inspection validate src-mac",
+      "purpose": "Add an additional DAI check on the Ethernet source MAC vs. the ARP payload MAC."
+    }
+  ],
+  "verification_commands": [
+    {
+      "command": "show ip dhcp snooping binding",
+      "purpose": "Display the DHCP Snooping binding table."
+    },
+    {
+      "command": "show ip arp inspection",
+      "purpose": "Display DAI status and statistics per VLAN."
+    }
+  ],
+  "show_commands": [
+    {
+      "command": "show ip dhcp snooping binding",
+      "purpose": "Primary verification for the binding table DAI depends on."
+    }
+  ],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [
+    {
+      "title": "DHCP Snooping + DAI on an access switch",
+      "code": "ip dhcp snooping\nip dhcp snooping vlan 10\nno ip dhcp snooping information option\n!\ninterface GigabitEthernet0/1\n description Link to DHCP server\n ip dhcp snooping trust\n ip arp inspection trust\n!\nip arp inspection vlan 10"
+    }
+  ],
+  "troubleshooting": [
+    {
+      "symptom": "DHCP Snooping just enabled; all users suddenly stop getting IP addresses, even though the DHCP server is healthy and connected on Gi0/1.",
+      "cause": "Gi0/1 (the server-facing port) was never marked trusted, so the switch drops the server's own Offer/Ack messages as untrusted.",
+      "fix": "Configure 'ip dhcp snooping trust' on Gi0/1."
+    },
+    {
+      "symptom": "DAI enabled without DHCP Snooping active.",
+      "cause": "DAI has no binding table to validate against.",
+      "fix": "DAI will not function correctly — DHCP Snooping must be enabled and populated first."
+    }
+  ],
+  "best_practices": [
+    "Always trust the DHCP server-facing port for both Snooping and DAI in the same pass — forgetting one causes a partial, confusing failure.",
+    "Disable Option 82 on switches that are not DHCP relays."
+  ],
+  "security_notes": [
+    "Together these two features are the standard defense against rogue DHCP servers and ARP-spoofing based man-in-the-middle attacks on the LAN."
+  ],
+  "interview_questions": [
+    "Why would DAI fail immediately after being enabled on a switch that has never run DHCP Snooping?",
+    "What exactly gets dropped by an untrusted DHCP Snooping port, and why?",
+    "Explain how the binding table connects DHCP Snooping and DAI."
+  ],
+  "exam_traps": [
+    "Forgetting to trust the server-facing port after enabling DHCP Snooping — this is the single most common exam and real-world mistake.",
+    "Believing DAI can work independently of DHCP Snooping — it cannot."
+  ],
+  "enterprise_notes": [
+    "These are typically enabled together as a pair whenever a customer requires Layer-2 hardening on access switches."
+  ],
+  "related_topics": [
+    "dhcp",
+    "port_security",
+    "acl"
+  ],
+  "difficulty": "Medium",
+  "keywords": [
+    "DHCP Snooping",
+    "DAI",
+    "Binding Table",
+    "Trusted Port",
+    "Option 82"
+  ],
+  "tags": [
+    "Security",
+    "Layer2",
+    "First-Hop-Security"
+  ],
+  "last_updated": "2026-07-05"
+}

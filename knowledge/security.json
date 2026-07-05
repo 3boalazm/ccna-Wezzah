@@ -1,0 +1,106 @@
+{
+  "topic_id": "security",
+  "path": [
+    "CCNA",
+    "Security",
+    "Security Fundamentals"
+  ],
+  "source_docs": [
+    "Doc9-Stage6-Automation",
+    "Doc1-CCNA-Ch1-10"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "timers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "Foundational security concepts covering the vocabulary of attacks/threats, common attack types and malware, the AAA model, and IOS password/access hardening that underlie every specific enforcement mechanism (ACL, Port Security, DAI, wireless encryption).",
+  "definitions": [
+    "Vulnerability: a weakness that can compromise security.",
+    "Exploit: a means of taking advantage of a vulnerability.",
+    "Threat: the potential to use an exploit.",
+    "AAA: Authentication ('who are you?'), Authorization ('what can you do?'), Accounting ('what did you do?')."
+  ],
+  "core_concepts": [
+    "Attack types: DoS/DDoS (resource depletion), Spoofing (faking source IP/MAC), Reconnaissance (domain discovery, ping sweeps, port scans), Man-in-the-Middle (attacker wedges between two systems).",
+    "Malware types: Trojan Horse (hidden in legitimate software), Virus (injects into apps, needs user action), Worm (propagates autonomously).",
+    "TACACS+ (Cisco proprietary, TCP 49) vs. RADIUS (open standard, UDP 1812/1813) as the two main AAA protocols."
+  ],
+  "protocol_operation": [],
+  "packet_flow": "",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [
+    "TACACS+: TCP 49.",
+    "RADIUS: UDP 1812/1813."
+  ],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [
+    {
+      "command": "service password-encryption",
+      "purpose": "Weakly (Type 7) encrypt plaintext passwords stored in the config."
+    },
+    {
+      "command": "enable secret [password]",
+      "purpose": "Set a strongly hashed (MD5/SHA) privileged-mode password."
+    },
+    {
+      "command": "username [name] secret [password]",
+      "purpose": "Create a local user account with a hashed secret."
+    },
+    {
+      "command": "transport input {ssh | telnet | all | none}",
+      "purpose": "Restrict which remote-access protocols a VTY line accepts."
+    }
+  ],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [],
+  "best_practices": [
+    "Always use 'enable secret' (hashed) rather than the legacy 'enable password' (reversible).",
+    "Restrict VTY transport input to SSH only in production."
+  ],
+  "security_notes": [
+    "A Stateful Firewall tracks connection state to filter return traffic; a DMZ isolates public-facing servers; NGFW/NGIPS add deep packet inspection and host/software context awareness respectively."
+  ],
+  "interview_questions": [
+    "Explain the difference between a vulnerability, an exploit, and a threat.",
+    "Compare TACACS+ and RADIUS.",
+    "What is the difference between Authentication, Authorization, and Accounting?"
+  ],
+  "exam_traps": [
+    "Confusing Type 7 (weak, reversible) password encryption with 'enable secret' (strong hash) — Type 7 is not real security."
+  ],
+  "enterprise_notes": [
+    "AAA (typically via TACACS+ for device administration) is standard in enterprise environments requiring centralized, auditable admin access control."
+  ],
+  "related_topics": [
+    "port_security",
+    "dhcp_snooping_dai",
+    "acl",
+    "wireless"
+  ],
+  "difficulty": "Medium",
+  "keywords": [
+    "AAA",
+    "TACACS+",
+    "RADIUS",
+    "DMZ",
+    "NGFW",
+    "Vulnerability",
+    "Exploit",
+    "Threat"
+  ],
+  "tags": [
+    "Security",
+    "Fundamentals"
+  ],
+  "last_updated": "2026-07-05"
+}

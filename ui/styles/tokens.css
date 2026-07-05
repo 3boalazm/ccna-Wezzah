@@ -58,3 +58,51 @@
   --radius: 8px;
   --radius-card: 12px;
 }
+
+/* Motion — small, purposeful liveliness. Nothing loops forever; everything
+   plays once on mount/state-change so it reads as "responsive UI", not
+   "busy UI". Used by TopicPage, QuestionBankPage, ExamPage, ScenarioPage,
+   ReviewPage via plain className references (inline-style objects can't
+   express keyframes, so these stay in the global stylesheet). */
+
+@keyframes ccna-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ccna-pop {
+  0%   { transform: scale(0.96); opacity: 0.6; }
+  60%  { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes ccna-shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+@keyframes ccna-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes ccna-confetti-fall {
+  0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(120px) rotate(360deg); opacity: 0; }
+}
+
+.ccna-anim-fade-up { animation: ccna-fade-up 0.28s ease both; }
+.ccna-anim-pop { animation: ccna-pop 0.25s ease both; }
+.ccna-anim-shake { animation: ccna-shake 0.4s ease; }
+.ccna-anim-spin { animation: ccna-spin 0.8s linear infinite; }
+
+.ccna-hoverable {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.ccna-hoverable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+.ccna-press:active {
+  transform: scale(0.97);
+}
+.ccna-transition-all {
+  transition: all 0.18s ease;
+}

@@ -1,0 +1,89 @@
+{
+  "topic_id": "snmp",
+  "path": [
+    "CCNA",
+    "IP Services",
+    "SNMP"
+  ],
+  "source_docs": [
+    "Doc2-CCNA-Ch11-20",
+    "Doc6-Stage3-DeviceMgmt"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "timers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "SNMP (Simple Network Management Protocol) is an application-layer protocol used to monitor and manage network devices from a central management station.",
+  "definitions": [
+    "SNMP Manager / NMS: the software (e.g. Cisco Prime) that collects data from managed devices.",
+    "SNMP Agent: the process running on a router/switch that responds to the manager and can send event notifications.",
+    "MIB: Management Information Base — a database of variables (OIDs) inside a device describing its state."
+  ],
+  "core_concepts": [
+    "Get/Set messages are initiated by the Manager to read or change a value.",
+    "Trap/Inform messages are initiated by the Agent to notify the Manager of an event (e.g. an interface going down); Inform requires acknowledgment, Trap does not.",
+    "SNMPv2c relies on plaintext Community Strings; SNMPv3 adds real authentication and encryption."
+  ],
+  "protocol_operation": [
+    "Manager sends Get/Set to an Agent's UDP 161.",
+    "Agent replies with the requested MIB value or confirms the Set.",
+    "Agent independently sends Trap/Inform to the Manager's UDP 162 when a significant event occurs."
+  ],
+  "packet_flow": "NMS -> Get/Set request (UDP 161) -> Agent on device -> reads/writes MIB (OID) -> reply to NMS. Independently: Agent detects event -> Trap/Inform (UDP 162) -> NMS.",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [
+    "SNMP Agent: UDP 161.",
+    "SNMP Manager (Traps/Informs): UDP 162."
+  ],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [],
+  "best_practices": [
+    "Prefer SNMPv3 over SNMPv2c wherever supported, since Community Strings are sent in clear text."
+  ],
+  "security_notes": [
+    "SNMPv2c Community Strings are effectively a shared plaintext password and should be treated as a real credential, not a default label like 'public'."
+  ],
+  "interview_questions": [
+    "What is the difference between an SNMP Trap and an Inform?",
+    "Why is SNMPv3 considered more secure than SNMPv2c?",
+    "What is stored inside a MIB?"
+  ],
+  "exam_traps": [
+    "Mixing up the port numbers — Agent listens on 161, Manager listens for Trap/Inform on 162.",
+    "Assuming SNMPv2c is secure because it 'looks' like a login — Community Strings are plaintext."
+  ],
+  "enterprise_notes": [
+    "SNMP is the backbone of most enterprise NMS dashboards, typically paired with Syslog and NTP for full observability."
+  ],
+  "related_topics": [
+    "ntp",
+    "syslog",
+    "fhrp"
+  ],
+  "difficulty": "Medium",
+  "keywords": [
+    "MIB",
+    "OID",
+    "Trap",
+    "Inform",
+    "Community String",
+    "SNMPv3"
+  ],
+  "tags": [
+    "IP-Services",
+    "Management"
+  ],
+  "last_updated": "2026-07-05"
+}

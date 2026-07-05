@@ -1,0 +1,74 @@
+{
+  "topic_id": "routing_table",
+  "path": [
+    "CCNA",
+    "Routing",
+    "Routing Table"
+  ],
+  "source_docs": [
+    "Doc5-Stage2-ACL-NAT",
+    "Doc2-CCNA-Ch11-20"
+  ],
+  "completeness": "partial",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "port_numbers",
+    "timers",
+    "protocol_numbers",
+    "debug_commands",
+    "config_commands",
+    "cli_examples",
+    "config_examples"
+  ],
+  "overview": "The routing table is the router's forwarding decision database, populated by directly connected routes, static routes, and dynamic routing protocols such as OSPF's SPF calculation. This material covers it primarily through its relationship to OSPF and FHRP rather than as a standalone deep-dive.",
+  "definitions": [
+    "Administrative Distance (AD): a per-source trustworthiness ranking used to choose between routes to the same destination learned from different sources."
+  ],
+  "core_concepts": [
+    "OSPF populates the routing table via its SPF (shortest-path-first) calculation over the link-state database.",
+    "FHRP (HSRP/VRRP/GLBP) is closely tied to routing-table concepts because it governs default-gateway resiliency for hosts."
+  ],
+  "protocol_operation": [],
+  "packet_flow": "",
+  "header_fields": [],
+  "default_values": [
+    "Administrative Distance for a DHCP-learned default route: 254."
+  ],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [],
+  "best_practices": [],
+  "security_notes": [],
+  "interview_questions": [
+    "How does OSPF's SPF calculation end up populating the routing table?",
+    "Why is a DHCP-learned default route given a very high (untrusted) Administrative Distance of 254?"
+  ],
+  "exam_traps": [
+    "Assuming a DHCP-learned default route is preferred over other sources — its AD of 254 makes it the least preferred by default."
+  ],
+  "enterprise_notes": [],
+  "related_topics": [
+    "ospf",
+    "fhrp",
+    "ipv6"
+  ],
+  "difficulty": "Medium",
+  "keywords": [
+    "Administrative Distance",
+    "SPF",
+    "Routing Table",
+    "Default Route"
+  ],
+  "tags": [
+    "Routing"
+  ],
+  "last_updated": "2026-07-05"
+}

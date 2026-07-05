@@ -1,0 +1,118 @@
+{
+  "topic_id": "syslog",
+  "path": [
+    "CCNA",
+    "IP Services",
+    "Syslog"
+  ],
+  "source_docs": [
+    "Doc2-CCNA-Ch11-20",
+    "Doc6-Stage3-DeviceMgmt"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "timers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "Syslog is the standard mechanism for network devices to generate, store, and forward event messages, ranked by severity, for troubleshooting and auditing.",
+  "definitions": [
+    "Severity level: a 0-7 scale ranking how critical a logged event is, with 0 (Emergency) the most severe and 7 (Debugging) the least."
+  ],
+  "core_concepts": [
+    "Messages can be sent to the console, stored in a limited RAM buffer, or forwarded to an external Syslog server over UDP 514.",
+    "NTP accuracy is what makes cross-device Syslog correlation meaningful."
+  ],
+  "protocol_operation": [
+    "Device generates a message tagged with a severity level whenever a relevant event occurs.",
+    "Message is routed to whichever destinations are configured (console/buffer/server), filtered by the configured minimum severity."
+  ],
+  "packet_flow": "Event occurs on device (e.g. interface down) -> message generated with severity level -> filtered against configured logging level -> sent to console / buffered in RAM / forwarded via UDP 514 to external Syslog server.",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [
+    "Syslog: UDP 514 (to an external server)."
+  ],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [
+    {
+      "command": "logging buffered [size]",
+      "purpose": "Store log messages in a local RAM buffer of the given size."
+    },
+    {
+      "command": "logging [host]",
+      "purpose": "Send log messages to an external Syslog server."
+    },
+    {
+      "command": "logging console [level]",
+      "purpose": "Set the minimum severity level of messages sent to the console."
+    }
+  ],
+  "verification_commands": [
+    {
+      "command": "show logging",
+      "purpose": "Display the current logging configuration and buffered messages."
+    }
+  ],
+  "show_commands": [
+    {
+      "command": "show logging",
+      "purpose": "Primary Syslog verification command."
+    }
+  ],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [
+    {
+      "title": "Send warnings-and-above to a central Syslog server",
+      "code": "logging host 10.1.1.50\nlogging trap warnings"
+    }
+  ],
+  "troubleshooting": [
+    {
+      "symptom": "Syslog messages no longer reach the central server after its IP address changed.",
+      "cause": "The router's 'logging [host]' command still points at the old server IP.",
+      "fix": "Verify/update the logging host command to the new server address, then confirm with 'show logging'."
+    },
+    {
+      "symptom": "Need only Warnings and above forwarded to the server.",
+      "cause": "Logging trap level was left at a lower (more verbose) severity threshold.",
+      "fix": "Raise the severity filter, e.g. 'logging trap warnings', so only level 4 and more severe messages are sent."
+    }
+  ],
+  "best_practices": [
+    "Always pair Syslog with NTP so timestamps across multiple devices can be correlated during an incident."
+  ],
+  "security_notes": [
+    "Retaining Syslog history is important for security auditing/forensics after an incident."
+  ],
+  "interview_questions": [
+    "List the Syslog severity levels from most to least severe.",
+    "Why is NTP considered a prerequisite for useful Syslog analysis across a network?"
+  ],
+  "exam_traps": [
+    "Mixing up severity direction — 0 is the MOST severe (Emergency), 7 is the LEAST (Debugging)."
+  ],
+  "enterprise_notes": [
+    "Central Syslog collection (e.g. into a SIEM) is standard practice in enterprise NOC/SOC operations."
+  ],
+  "related_topics": [
+    "ntp",
+    "snmp"
+  ],
+  "difficulty": "Easy",
+  "keywords": [
+    "Severity Level",
+    "logging buffered",
+    "logging host",
+    "UDP 514"
+  ],
+  "tags": [
+    "IP-Services",
+    "Management"
+  ],
+  "last_updated": "2026-07-05"
+}

@@ -1,0 +1,97 @@
+{
+  "topic_id": "wan_architecture",
+  "path": [
+    "CCNA",
+    "Architecture",
+    "WAN Architecture"
+  ],
+  "source_docs": [
+    "Doc2-CCNA-Ch11-20",
+    "Doc5-Stage2-ACL-NAT"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "timers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "WAN Architecture covers how sites connect over provider networks — Metro Ethernet (Layer 2), MPLS VPN (Layer 3), and Internet VPNs — plus the OSPF-over-MPLS design pattern that appears in enterprise WAN scenarios.",
+  "definitions": [
+    "Metro Ethernet (MetroE): a Layer 2 service where the provider network behaves like one large switch; E-Line (point-to-point), E-LAN (full mesh), E-Tree (hub-and-spoke).",
+    "MPLS VPN: a Layer 3 service where the provider actually routes the customer's IP packets.",
+    "Site-to-Site VPN: a permanent tunnel (IPsec/GRE) between two sites.",
+    "Remote Access VPN: a client-to-gateway tunnel, typically over TLS/HTTPS."
+  ],
+  "core_concepts": [
+    "In an MPLS VPN, the customer edge (CE) router forms its routing adjacency with the provider edge (PE) router — never directly with a CE at another site.",
+    "The provider redistributes the customer's OSPF routes across the MPLS core using MP-BGP.",
+    "A 'Super Backbone' design lets multiple customer OSPF areas be connected together through the MPLS VPN core."
+  ],
+  "protocol_operation": [
+    "CE router peers with PE router using OSPF.",
+    "PE redistributes those OSPF routes into MP-BGP to cross the provider's MPLS core.",
+    "The remote PE redistributes back into OSPF toward the remote CE."
+  ],
+  "packet_flow": "Branch CE router (OSPF) -> Provider PE router -> MP-BGP carries customer routes across MPLS core -> remote PE -> redistributed back into OSPF -> remote CE router -> destination site.",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [
+    "HTTPS (used for Remote Access VPN, TLS-based): TCP 443."
+  ],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [
+    {
+      "symptom": "An inbound ACL on the WAN-facing interface blocks OSPF Hello packets.",
+      "cause": "OSPF Hellos were not explicitly permitted in the ACL, so the adjacency never forms.",
+      "fix": "Add a permit rule for the OSPF Hello traffic (e.g. permit ip host <neighbor> host 224.0.0.5) or otherwise allow OSPF multicast/unicast Hellos through the ACL."
+    }
+  ],
+  "best_practices": [
+    "Choose MetroE (Layer 2) when the enterprise wants to run its own routing across sites; choose MPLS VPN (Layer 3) when the provider should handle routing."
+  ],
+  "security_notes": [
+    "Site-to-Site VPNs (IPsec/GRE) and Remote Access VPNs (TLS/HTTPS) both encrypt traffic across otherwise-untrusted transport, unlike plain MetroE/MPLS which rely on the provider's own separation."
+  ],
+  "interview_questions": [
+    "Why does a CE router form an OSPF adjacency with the PE, not with a CE at another site?",
+    "Compare MetroE's E-Line/E-LAN/E-Tree topologies.",
+    "What is a Super Backbone design used for?"
+  ],
+  "exam_traps": [
+    "Assuming a branch CE directly peers with a remote-site CE over MPLS VPN — it always peers with its local PE."
+  ],
+  "enterprise_notes": [
+    "The classic branch-office 'can't reach central server' scenario chains OSPF (over MPLS), NAT (Overload) and ACL together and must be diagnosed in that order."
+  ],
+  "related_topics": [
+    "ospf",
+    "nat",
+    "cloud",
+    "qos"
+  ],
+  "difficulty": "Hard",
+  "keywords": [
+    "MetroE",
+    "E-Line",
+    "E-LAN",
+    "E-Tree",
+    "MPLS VPN",
+    "MP-BGP",
+    "Super Backbone",
+    "Site-to-Site VPN"
+  ],
+  "tags": [
+    "Architecture",
+    "WAN"
+  ],
+  "last_updated": "2026-07-05"
+}

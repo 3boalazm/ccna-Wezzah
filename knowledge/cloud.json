@@ -1,0 +1,80 @@
+{
+  "topic_id": "cloud",
+  "path": [
+    "CCNA",
+    "Architecture",
+    "Cloud"
+  ],
+  "source_docs": [
+    "Doc9-Stage6-Automation",
+    "Doc2-CCNA-Ch11-20"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "port_numbers",
+    "timers",
+    "protocol_numbers",
+    "debug_commands",
+    "config_commands"
+  ],
+  "overview": "Cloud computing delivers IT services on demand rather than through owned, on-premises hardware, characterized by NIST's five essential characteristics and delivered via three service models.",
+  "definitions": [
+    "IaaS: Infrastructure as a Service — rent virtual machines/network/storage and manage the OS and applications yourself (e.g. AWS EC2).",
+    "PaaS: Platform as a Service — a development platform is provided; you don't manage the underlying OS (e.g. Google App Engine).",
+    "SaaS: Software as a Service — a finished, ready-to-use application (e.g. Office 365).",
+    "vSwitch: a virtual switch inside a hypervisor host connecting VMs to each other and to the physical NICs."
+  ],
+  "core_concepts": [
+    "NIST's five characteristics: On-demand self-service, Broad network access, Resource pooling, Rapid elasticity, Measured service.",
+    "Virtualization: a hypervisor divides one physical machine's hardware into multiple isolated Virtual Machines (VMs)."
+  ],
+  "protocol_operation": [],
+  "packet_flow": "",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [],
+  "best_practices": [
+    "Choose the service model (IaaS/PaaS/SaaS) that matches how much of the stack the organization actually wants to manage."
+  ],
+  "security_notes": [],
+  "interview_questions": [
+    "Explain the difference between IaaS, PaaS, and SaaS with an example of each.",
+    "List and explain NIST's five essential characteristics of cloud computing.",
+    "What is a vSwitch and where does it sit in a virtualized host?"
+  ],
+  "exam_traps": [
+    "Mixing up which service model manages which layer — remember: IaaS = infrastructure only, PaaS = platform (no OS management), SaaS = finished app."
+  ],
+  "enterprise_notes": [
+    "Enterprises typically connect to cloud providers over WAN links (MetroE/MPLS/Internet VPN), making Cloud and WAN Architecture closely linked topics."
+  ],
+  "related_topics": [
+    "sdn",
+    "wan_architecture"
+  ],
+  "difficulty": "Easy",
+  "keywords": [
+    "IaaS",
+    "PaaS",
+    "SaaS",
+    "Hypervisor",
+    "vSwitch",
+    "NIST 5 Characteristics"
+  ],
+  "tags": [
+    "Architecture",
+    "Cloud"
+  ],
+  "last_updated": "2026-07-05"
+}

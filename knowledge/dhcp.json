@@ -1,0 +1,146 @@
+{
+  "topic_id": "dhcp",
+  "path": [
+    "CCNA",
+    "IP Services",
+    "DHCP"
+  ],
+  "source_docs": [
+    "Doc1-CCNA-Ch1-10",
+    "Doc6-Stage3-DeviceMgmt"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "timers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "DHCP (Dynamic Host Configuration Protocol) automatically distributes IPv4 configuration (address, subnet mask, default gateway, DNS servers) to hosts, removing the need for manual configuration on every client.",
+  "definitions": [
+    "DORA: the four-message sequence — Discover, Offer, Request, Acknowledgment.",
+    "DHCP Relay: a router feature that forwards DHCP broadcasts to a server on a different subnet.",
+    "DHCP Pool: a named block of configuration (network, exclusions, options) a router hands out as a DHCP server."
+  ],
+  "core_concepts": [
+    "DORA process: client broadcasts Discover, server replies Offer, client broadcasts Request (to accept, and to signal other servers it declined their offer), server replies Ack.",
+    "DHCP Relay is required whenever the DHCP server sits in a different subnet than the client — the relay device converts the client's broadcast into a unicast aimed at the server.",
+    "Exclusions reserve addresses (e.g. for static devices) so the server never offers them dynamically."
+  ],
+  "protocol_operation": [
+    "Discover: client broadcasts (255.255.255.255) looking for any DHCP server.",
+    "Offer: a server proposes an address/lease.",
+    "Request: client broadcasts acceptance of one offer (also tells other servers their offer was not used).",
+    "Acknowledgment: server confirms the lease is bound to the client."
+  ],
+  "packet_flow": "Client (no IP) -> broadcasts DHCPDISCOVER -> DHCP server(s) reply DHCPOFFER -> client broadcasts DHCPREQUEST for the chosen offer -> server sends DHCPACK -> client configures its interface with the offered address, mask, gateway, and DNS.",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [
+    "DHCP Server: UDP 67.",
+    "DHCP Client: UDP 68."
+  ],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [
+    {
+      "command": "ip dhcp excluded-address [start] [end]",
+      "purpose": "Exclude a range of addresses from a DHCP pool (e.g. static devices)."
+    },
+    {
+      "command": "ip dhcp pool [name]",
+      "purpose": "Create/enter a DHCP address pool."
+    },
+    {
+      "command": "network [subnet] [mask]",
+      "purpose": "Define the subnet the pool serves (inside 'ip dhcp pool' mode)."
+    },
+    {
+      "command": "ip helper-address [server-ip]",
+      "purpose": "Configure DHCP Relay on the interface facing the client, forwarding broadcasts to the specified server."
+    },
+    {
+      "command": "ip address dhcp",
+      "purpose": "Configure an interface to obtain its own IPv4 address via DHCP (client mode)."
+    }
+  ],
+  "verification_commands": [
+    {
+      "command": "show ip dhcp binding",
+      "purpose": "Show leases currently handed out by the local router acting as DHCP server."
+    },
+    {
+      "command": "show ip dhcp pool",
+      "purpose": "Show pool configuration and utilization."
+    }
+  ],
+  "show_commands": [
+    {
+      "command": "show ip dhcp binding",
+      "purpose": "Primary verification of active DHCP leases."
+    }
+  ],
+  "debug_commands": [],
+  "cli_examples": [
+    {
+      "title": "Host-side verification commands",
+      "code": "Windows: ipconfig /all\nMac/Linux: ifconfig\nNewer Linux: ip address ; ip route",
+      "explanation": "Used to confirm what IPv4 configuration a client actually received from DHCP."
+    }
+  ],
+  "config_examples": [
+    {
+      "title": "Router as DHCP server with relay on a remote subnet",
+      "code": "ip dhcp excluded-address 10.1.1.1 10.1.1.10\nip dhcp pool LAN1\n network 10.1.1.0 255.255.255.0\n default-router 10.1.1.1\n dns-server 8.8.8.8\n!\ninterface GigabitEthernet0/1\n ip helper-address 10.1.1.1"
+    }
+  ],
+  "troubleshooting": [
+    {
+      "symptom": "Clients get no IP address at all.",
+      "cause": "DHCP Snooping enabled on the switch but the server-facing port is not trusted.",
+      "fix": "Mark the server-facing port with 'ip dhcp snooping trust'."
+    },
+    {
+      "symptom": "Clients on a remote subnet never get an address even though the server is healthy.",
+      "cause": "No 'ip helper-address' configured on the router interface facing that subnet, so the broadcast never reaches the server.",
+      "fix": "Add 'ip helper-address [server-ip]' on the client-facing interface."
+    }
+  ],
+  "best_practices": [
+    "Always exclude infrastructure/static addresses from the pool before defining it, to avoid double-assignment.",
+    "Keep DNS server and default-router options accurate in every pool."
+  ],
+  "security_notes": [
+    "DHCP itself has no built-in protection against rogue servers — that protection is DHCP Snooping's job, not DHCP's."
+  ],
+  "interview_questions": [
+    "Walk through the DORA process step by step.",
+    "Why is a DHCP Relay agent necessary when the server is on a different subnet?",
+    "What does 'ip helper-address' actually do to the broadcast packet?"
+  ],
+  "exam_traps": [
+    "Assuming DHCP alone provides security against rogue servers — it does not; that requires DHCP Snooping.",
+    "Forgetting that DHCPREQUEST is broadcast (not unicast) so other servers also learn their offer was declined."
+  ],
+  "enterprise_notes": [
+    "DHCP Relay is essential in any enterprise where DHCP servers are centralized but clients are spread across many subnets/VLANs."
+  ],
+  "related_topics": [
+    "dhcp_snooping_dai",
+    "dns",
+    "nat"
+  ],
+  "difficulty": "Medium",
+  "keywords": [
+    "DORA",
+    "DHCP Relay",
+    "ip helper-address",
+    "DHCP Pool",
+    "Exclusions"
+  ],
+  "tags": [
+    "DHCP",
+    "IP-Services"
+  ],
+  "last_updated": "2026-07-05"
+}

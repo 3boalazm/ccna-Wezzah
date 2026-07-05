@@ -1,0 +1,109 @@
+{
+  "topic_id": "automation",
+  "path": [
+    "CCNA",
+    "Automation",
+    "Ansible/Puppet/Chef"
+  ],
+  "source_docs": [
+    "Doc9-Stage6-Automation",
+    "Doc2-CCNA-Ch11-20"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "port_numbers",
+    "timers",
+    "protocol_numbers",
+    "debug_commands"
+  ],
+  "overview": "Configuration-management tools (Ansible, Puppet, Chef) solve 'configuration drift' by applying and enforcing a standard configuration across many devices, using REST/JSON/YAML as the underlying data/interchange formats.",
+  "definitions": [
+    "Configuration Drift: when a device's actual configuration deviates from its intended baseline over time.",
+    "Idempotency: applying the same configuration repeatedly produces the same end state without errors or duplication.",
+    "REST API: a stateless client/server architecture using HTTP verbs to perform CRUD operations.",
+    "CRUD: Create, Read, Update, Delete — mapped to POST, GET, PATCH/PUT, DELETE."
+  ],
+  "core_concepts": [
+    "Ansible: Push model, agentless (uses SSH), playbooks written in YAML, uses Jinja2 templating.",
+    "Puppet: Pull model, agent-based, configuration written as Manifests in a Ruby DSL.",
+    "Chef: Pull model, agent-based, configuration written as Recipes/Cookbooks in a Ruby DSL.",
+    "JSON syntax: objects use { }, arrays use [ ], and each entry is a Key:Value pair."
+  ],
+  "protocol_operation": [
+    "Ansible connects to each target device via SSH (push) and applies the playbook's tasks in order.",
+    "Puppet/Chef agents periodically pull their intended configuration from a central server and reconcile local state to match."
+  ],
+  "packet_flow": "Ansible control node -> SSH connection to target device -> playbook tasks executed in order -> idempotency check (if the correct config already exists, no change is made, no error is thrown).",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [
+    {
+      "command": "ansible-playbook [playbook.yml]",
+      "purpose": "Run an Ansible playbook against the devices defined in its inventory (control-node CLI, not IOS)."
+    }
+  ],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [
+    {
+      "title": "REST CRUD-to-HTTP-verb mapping",
+      "code": "POST   -> Create\nGET    -> Read\nPATCH/PUT -> Update\nDELETE -> Delete"
+    }
+  ],
+  "config_examples": [],
+  "troubleshooting": [
+    {
+      "symptom": "An Ansible playbook to change interface speed on 50 routers fails to connect to all of them.",
+      "cause": "SSH is not enabled/reachable on the target routers, which is the transport Ansible normally uses to reach network devices.",
+      "fix": "Verify SSH is enabled on the routers (crypto keys generated, VTY transport set to ssh) and reachable from the Ansible control node."
+    },
+    {
+      "symptom": "Ansible finds a router that already has the correct configuration.",
+      "cause": "This is expected idempotent behavior, not a bug.",
+      "fix": "Ansible will not rewrite the configuration if the desired state already matches — this property is called idempotency."
+    }
+  ],
+  "best_practices": [
+    "Use templates and variables so devices with similar roles share a consistent configuration baseline.",
+    "Watch YAML indentation carefully — incorrect indentation is the most common Ansible parsing error."
+  ],
+  "security_notes": [],
+  "interview_questions": [
+    "Why is Ansible described as agentless while Puppet and Chef are agent-based?",
+    "Explain 'idempotency' and why it matters for automation tools.",
+    "What are the four HTTP verbs used for CRUD operations, and what does each map to?"
+  ],
+  "exam_traps": [
+    "Mixing up Push (Ansible) vs. Pull (Puppet/Chef) models.",
+    "Incorrect YAML indentation causing playbook parse failures."
+  ],
+  "enterprise_notes": [
+    "Config-management tooling is central to Cisco SDA/SDN operational models, letting fabric-wide changes be applied consistently instead of device-by-device."
+  ],
+  "related_topics": [
+    "sdn",
+    "sda"
+  ],
+  "difficulty": "Medium",
+  "keywords": [
+    "Ansible",
+    "Puppet",
+    "Chef",
+    "Playbook",
+    "Idempotency",
+    "YAML",
+    "REST",
+    "CRUD"
+  ],
+  "tags": [
+    "Automation",
+    "Network-Programmability"
+  ],
+  "last_updated": "2026-07-05"
+}

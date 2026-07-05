@@ -7,6 +7,8 @@
 
 import React, { useMemo, useState } from "react";
 import * as questionEngine from "../../engines/question-engine";
+import * as reviewEngine from "../../engines/review-engine";
+import { getCurrentUserId } from "../../services/current-user";
 import type { QuestionItem } from "../../engines/knowledge-engine/types";
 
 export interface QuestionBankPageProps {
@@ -48,14 +50,18 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
     const correct = graded.filter((q) => answers[q.id].correct).length;
     const pct = graded.length ? Math.round((correct / graded.length) * 100) : 0;
     return (
-      <div style={S.finish}>
+      <div style={S.finish} className="ccna-anim-fade-up">
+        <div style={S.finishBadge}>{pct >= 80 ? "🎉" : pct >= 50 ? "💪" : "📘"}</div>
         <h2 style={S.finishTitle}>Session complete</h2>
-        <div style={S.bigScore}>{pct}%</div>
+        <div style={S.bigScore} className="ccna-anim-pop">
+          {pct}%
+        </div>
         <p style={S.muted}>
           {correct} correct out of {graded.length} graded questions.
         </p>
         <button
           style={S.restartBtn}
+          className="ccna-hoverable ccna-press"
           onClick={() => {
             setIndex(0);
             setAnswers({});
@@ -71,7 +77,15 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
   const state = answers[q.id];
 
   const answerMcq = (picked: string) => {
-    setAnswers((prev) => ({ ...prev, [q.id]: { picked, correct: picked === q.correct_answer } }));
+    const correct = picked === q.correct_answer;
+    setAnswers((prev) => ({ ...prev, [q.id]: { picked, correct } }));
+    reviewEngine.recordAttempt({
+      user_id: getCurrentUserId(),
+      question_id: q.id,
+      topic_id: q.source_topic,
+      correct,
+      timestamp: new Date().toISOString(),
+    });
   };
 
   const revealFlashcard = () => {
@@ -80,6 +94,13 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
 
   const selfGrade = (knew: boolean) => {
     setAnswers((prev) => ({ ...prev, [q.id]: { correct: knew } }));
+    reviewEngine.recordAttempt({
+      user_id: getCurrentUserId(),
+      question_id: q.id,
+      topic_id: q.source_topic,
+      correct: knew,
+      timestamp: new Date().toISOString(),
+    });
     setIndex((i) => i + 1);
   };
 
@@ -103,11 +124,15 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
       </div>
 
       <div
+        key={q.id}
         style={{
           ...S.card,
           borderColor:
             state?.correct === true ? "#2E7D32" : state?.correct === false ? "#C0392B" : "var(--border, #E3E2DC)",
         }}
+        className={
+          "ccna-anim-fade-up" + (state?.correct === false ? " ccna-anim-shake" : "")
+        }
       >
         <div style={S.qmeta}>
           <span style={S.topicTag}>{q.source_topic.toUpperCase()}</span>
@@ -134,6 +159,7 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
                   disabled={!!state}
                   onClick={() => answerMcq(opt)}
                   style={style}
+                  className={!state ? "ccna-hoverable ccna-press" : undefined}
                 >
                   {opt}
                 </button>
@@ -210,6 +236,7 @@ const S: Record<string, React.CSSProperties> = {
   emptyState: { padding: "40px 20px", textAlign: "center", color: "var(--text-secondary, #6B6B65)" },
   muted: { color: "var(--text-muted, #9C9B94)", fontSize: 13.5 },
   finish: { textAlign: "center", padding: "40px 20px" },
+  finishBadge: { fontSize: 36, marginBottom: 4 },
   finishTitle: { fontSize: 22, margin: "0 0 6px" },
   bigScore: { fontSize: 44, fontWeight: 700, color: "var(--accent, #6C5CE7)", margin: "10px 0" },
   restartBtn: { marginTop: 16, padding: "10px 22px", borderRadius: 8, border: "none", background: "var(--accent, #6C5CE7)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" },

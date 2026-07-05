@@ -1,0 +1,82 @@
+{
+  "topic_id": "lan_architecture",
+  "path": [
+    "CCNA",
+    "Architecture",
+    "LAN Architecture"
+  ],
+  "source_docs": [
+    "Doc2-CCNA-Ch11-20"
+  ],
+  "completeness": "high",
+  "gaps": [
+    "header_fields",
+    "timers",
+    "protocol_numbers",
+    "debug_commands",
+    "config_commands",
+    "verification_commands",
+    "show_commands"
+  ],
+  "overview": "LAN Architecture covers campus design tiers (2-tier vs. 3-tier) and Power over Ethernet (PoE) standards used to power access-layer devices like IP phones and APs.",
+  "definitions": [
+    "2-tier (collapsed core) design: star topology at access, partial mesh at distribution; the core function is collapsed into the distribution layer.",
+    "3-tier design: distribution switches connect up to a dedicated core layer.",
+    "PSE: Power Sourcing Equipment (e.g. the switch supplying power).",
+    "PD: Powered Device (e.g. an IP phone or AP receiving power)."
+  ],
+  "core_concepts": [
+    "Choose 2-tier for smaller campuses (simpler, cheaper); choose 3-tier when scale requires a dedicated high-speed core."
+  ],
+  "protocol_operation": [],
+  "packet_flow": "",
+  "header_fields": [],
+  "default_values": [
+    "PoE (802.3af): 15.4W.",
+    "PoE+ (802.3at): 30W.",
+    "UPoE/UPoE+ (802.3bt): 60W/100W."
+  ],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [],
+  "best_practices": [
+    "Size PoE budgets per switch based on the actual devices connected (phone vs. Wi-Fi 6 AP can have very different power needs)."
+  ],
+  "security_notes": [],
+  "interview_questions": [
+    "When would you choose a 2-tier design over a 3-tier design?",
+    "What is the difference between PSE and PD?",
+    "Compare the power budgets of 802.3af, 802.3at, and 802.3bt."
+  ],
+  "exam_traps": [
+    "Assuming all PoE standards supply the same wattage — af/at/bt differ significantly (15.4W / 30W / 60-100W)."
+  ],
+  "enterprise_notes": [
+    "PoE-powered APs and IP phones are also the classic real-world use case driving QoS voice/video prioritization."
+  ],
+  "related_topics": [
+    "qos",
+    "port_security"
+  ],
+  "difficulty": "Easy",
+  "keywords": [
+    "2-tier",
+    "3-tier",
+    "Collapsed Core",
+    "PoE",
+    "PSE",
+    "PD"
+  ],
+  "tags": [
+    "Architecture",
+    "LAN"
+  ],
+  "last_updated": "2026-07-05"
+}

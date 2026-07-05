@@ -1,0 +1,77 @@
+{
+  "topic_id": "ipv6",
+  "path": [
+    "CCNA",
+    "Architecture",
+    "IPv6"
+  ],
+  "source_docs": [
+    "Doc5-Stage2-ACL-NAT"
+  ],
+  "completeness": "partial",
+  "gaps": [
+    "header_fields",
+    "default_values",
+    "port_numbers",
+    "timers",
+    "protocol_numbers",
+    "debug_commands",
+    "config_commands",
+    "cli_examples",
+    "config_examples"
+  ],
+  "overview": "This material covers IPv6 only where it intersects other CCNA topics already sourced (ACLs and FHRP) — deep IPv6 addressing/configuration is flagged as covered in an earlier, separate volume.",
+  "definitions": [],
+  "core_concepts": [
+    "Cisco devices support IPv6-specific access lists, viewable with 'show access-lists' (the same command used for IPv4 in some contexts).",
+    "HSRPv2 supports IPv6; HSRP version 1 does not.",
+    "Hosts can learn IPv6 configuration automatically (SLAAC) or via DHCPv6."
+  ],
+  "protocol_operation": [],
+  "packet_flow": "",
+  "header_fields": [],
+  "default_values": [],
+  "port_numbers": [],
+  "timers": [],
+  "protocol_numbers": [],
+  "config_commands": [],
+  "verification_commands": [
+    {
+      "command": "show access-lists",
+      "purpose": "Displays configured access lists, including IPv6 ACLs."
+    }
+  ],
+  "show_commands": [],
+  "debug_commands": [],
+  "cli_examples": [],
+  "config_examples": [],
+  "troubleshooting": [],
+  "best_practices": [
+    "Use HSRPv2, not v1, wherever IPv6 default-gateway redundancy is required."
+  ],
+  "security_notes": [],
+  "interview_questions": [
+    "Which HSRP version is required to support IPv6, and why does it matter?",
+    "What are the two ways a host can learn its IPv6 configuration?"
+  ],
+  "exam_traps": [
+    "Assuming HSRP version 1 supports IPv6 — it does not; only HSRPv2 does."
+  ],
+  "enterprise_notes": [],
+  "related_topics": [
+    "routing_table",
+    "acl"
+  ],
+  "difficulty": "Medium",
+  "keywords": [
+    "HSRPv2",
+    "SLAAC",
+    "DHCPv6",
+    "IPv6 ACL"
+  ],
+  "tags": [
+    "Architecture",
+    "IPv6"
+  ],
+  "last_updated": "2026-07-05"
+}

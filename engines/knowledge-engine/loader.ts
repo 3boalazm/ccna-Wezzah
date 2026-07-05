@@ -81,6 +81,11 @@ export function getCachedTopic(topicId: string): KnowledgeModule | undefined {
   return cache.get(topicId);
 }
 
+export function getAllCachedTopics(): KnowledgeModule[] {
+  if (!cache) throw new Error("Knowledge base not loaded — call loadKnowledgeBase() first");
+  return [...cache.values()];
+}
+
 export function getRelations(): RelationsGraph {
   if (!relationsCache) throw new Error("Relations graph not loaded");
   return relationsCache;

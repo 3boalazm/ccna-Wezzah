@@ -12,7 +12,9 @@ import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import { domainOf } from "./domains";
 import QuestionBankPage from "../pages/QuestionBankPage";
-import EngineComingSoon from "../pages/EngineComingSoon";
+import ExamPage from "../pages/ExamPage";
+import ScenarioPage from "../pages/ScenarioPage";
+import ReviewPage from "../pages/ReviewPage";
 
 const DOMAIN_ACCENT: Record<string, string> = {
   routing: "var(--domain-routing)",
@@ -22,19 +24,6 @@ const DOMAIN_ACCENT: Record<string, string> = {
   automation: "var(--domain-automation)",
   wireless: "var(--domain-wireless)",
   architecture: "var(--domain-architecture)",
-};
-
-const ENGINE_REASONS: Record<string, string> = {
-  exam: "The Exam Engine assembles timed sessions from the Question Engine per an exam blueprint (domain weights, question-type mix). Its logic is stubbed pending Phase E implementation.",
-  troubleshooting: "The Troubleshooting Engine generates multi-topic scenarios from pre-defined templates (4 real seed scenarios already exist under engines/troubleshooting-engine/scenario-templates/), but the loader/generator function itself is not implemented yet.",
-  review: "The Review Engine's spaced-repetition scheduling depends on attempt history that only gets recorded once a real quiz session (Question Bank, Exam) writes to services/attempt-log.ts. The scheduling algorithm itself is also still a stub.",
-};
-
-const ENGINE_LABELS: Record<string, string> = {
-  "question-bank": "Question bank",
-  exam: "Exam simulator",
-  troubleshooting: "Scenario simulator",
-  review: "Review dashboard",
 };
 
 export interface WorkspaceLayoutProps {
@@ -56,10 +45,12 @@ export default function WorkspaceLayout({
   let mainContent: React.ReactNode;
   if (activeEngine === "question-bank") {
     mainContent = <QuestionBankPage topicId={activeTopicId} />;
-  } else if (activeEngine === "exam" || activeEngine === "troubleshooting" || activeEngine === "review") {
-    mainContent = (
-      <EngineComingSoon engineName={ENGINE_LABELS[activeEngine]} reason={ENGINE_REASONS[activeEngine]} />
-    );
+  } else if (activeEngine === "exam") {
+    mainContent = <ExamPage />;
+  } else if (activeEngine === "troubleshooting") {
+    mainContent = <ScenarioPage />;
+  } else if (activeEngine === "review") {
+    mainContent = <ReviewPage />;
   } else {
     mainContent = children; // no engine selected -> showing a topic
   }
@@ -76,8 +67,16 @@ export default function WorkspaceLayout({
         activeEngine={activeEngine}
         onSelectEngine={setActiveEngine}
       />
-      <main style={{ ...S.main, borderTop: `3px solid ${activeEngine ? "var(--accent, #6C5CE7)" : accent}` }}>
-        <div style={S.content}>{mainContent}</div>
+      <main
+        style={{
+          ...S.main,
+          borderTop: `3px solid ${activeEngine ? "var(--accent, #6C5CE7)" : accent}`,
+          transition: "border-color 0.2s ease",
+        }}
+      >
+        <div key={activeEngine ?? activeTopicId} style={S.content} className="ccna-anim-fade-up">
+          {mainContent}
+        </div>
       </main>
     </div>
   );

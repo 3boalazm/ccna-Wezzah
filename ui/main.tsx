@@ -10,10 +10,35 @@ import TopicPage from "./pages/TopicPage";
 import WorkspaceLayout from "./layout/WorkspaceLayout";
 import "./styles/tokens.css";
 
-// The topics converted so far (nat was the reference; ospf + acl added in
-// step 3). Extend this list as more /knowledge/*.json files are added —
-// this is presentation-layer wiring only, not a Knowledge Engine concern.
-const TOPICS = ["nat", "ospf", "acl"];
+// The topics converted so far. Extend this list as more /knowledge/*.json
+// files are added — this is presentation-layer wiring only, not a
+// Knowledge Engine concern. (Now covers all 22 topics referenced in
+// relations.json — nat/ospf/acl were the original 3, the rest were added
+// converting the source Markdown chapters into the same JSON contract.)
+const TOPICS = [
+  "nat",
+  "ospf",
+  "acl",
+  "dhcp",
+  "dhcp_snooping_dai",
+  "port_security",
+  "dns",
+  "snmp",
+  "ntp",
+  "syslog",
+  "fhrp",
+  "wireless",
+  "security",
+  "automation",
+  "sdn",
+  "sda",
+  "cloud",
+  "wan_architecture",
+  "lan_architecture",
+  "qos",
+  "ipv6",
+  "routing_table",
+];
 
 function App() {
   const [activeTopicId, setActiveTopicId] = useState("nat");
