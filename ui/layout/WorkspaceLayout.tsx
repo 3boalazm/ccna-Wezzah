@@ -1,15 +1,14 @@
 // ui/layout/WorkspaceLayout.tsx
-// The app shell: Sidebar (left, fixed) + main content pane (right, scrollable).
-//
-// BUGFIX: previously tracked `activeEngine` state but never used it to decide
-// what renders in <main> — clicking an Engine link in the Sidebar silently did
-// nothing. This version actually switches the rendered page based on it.
-// Only Question Bank is wired to a real, working engine (question-engine is
-// fully implemented); Exam/Troubleshooting/Review render an honest
-// "not implemented yet" state instead of a dead click.
+// The app shell: Sidebar (desktop) / MobileNav (< 860px floating pill) +
+// main content pane, scrollable. Visual language ported from the HLOS
+// learner shell per Ahmed's request (see Sidebar.tsx / MobileNav.tsx
+// headers for details) — CSS alone decides which nav renders at a given
+// width (.ccna-desktop-sidebar / .ccna-mobile-pill-nav in tokens.css), so
+// there's no layout-thrash on resize and no duplicated nav state.
 
 import React, { useState } from "react";
 import Sidebar from "./Sidebar";
+import MobileNav from "./MobileNav";
 import { domainOf } from "./domains";
 import QuestionBankPage from "../pages/QuestionBankPage";
 import ExamPage from "../pages/ExamPage";
@@ -40,8 +39,12 @@ export default function WorkspaceLayout({
   children,
 }: WorkspaceLayoutProps) {
   const [activeEngine, setActiveEngine] = useState<string | undefined>(undefined);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const accent = DOMAIN_ACCENT[domainOf(activeTopicId)];
+
+  const selectTopic = (t: string) => {
+    setActiveEngine(undefined);
+    onSelectTopic(t);
+  };
 
   let mainContent: React.ReactNode;
   if (activeEngine === "question-bank") {
@@ -58,40 +61,24 @@ export default function WorkspaceLayout({
 
   return (
     <div style={S.shell}>
-      <button
-        type="button"
-        onClick={() => setSidebarOpen(true)}
-        aria-label="Open navigation"
-        style={S.hamburgerBtn}
-        className="ccna-hamburger-btn ccna-press"
-      >
-        <span style={S.hamburgerLine} />
-        <span style={S.hamburgerLine} />
-        <span style={S.hamburgerLine} />
-      </button>
-
-      <div
-        className="ccna-sidebar-backdrop"
-        data-open={sidebarOpen}
-        onClick={() => setSidebarOpen(false)}
-      />
-
       <Sidebar
         topicIds={topicIds}
         activeTopicId={activeTopicId}
-        onSelectTopic={(t) => {
-          setActiveEngine(undefined);
-          onSelectTopic(t);
-        }}
+        onSelectTopic={selectTopic}
         activeEngine={activeEngine}
         onSelectEngine={setActiveEngine}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+      />
+      <MobileNav
+        topicIds={topicIds}
+        activeTopicId={activeTopicId}
+        onSelectTopic={selectTopic}
+        activeEngine={activeEngine}
+        onSelectEngine={setActiveEngine}
       />
       <main
         style={{
           ...S.main,
-          borderTop: `3px solid ${activeEngine ? "var(--accent, #6C5CE7)" : accent}`,
+          borderTop: `3px solid ${activeEngine ? "var(--accent)" : accent}`,
           transition: "border-color 0.2s ease",
         }}
         className="ccna-main-mobile"
@@ -108,28 +95,4 @@ const S: Record<string, React.CSSProperties> = {
   shell: { display: "flex", minHeight: "100vh", background: "var(--ws-bg)" },
   main: { flex: 1, overflowY: "auto", minWidth: 0 },
   content: { maxWidth: 860, margin: "0 auto", padding: "0 20px 80px" },
-  hamburgerBtn: {
-    position: "fixed",
-    top: 12,
-    left: 12,
-    zIndex: 20,
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    border: "1px solid var(--border)",
-    background: "var(--card-bg)",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    cursor: "pointer",
-  },
-  hamburgerLine: {
-    display: "block",
-    width: 16,
-    height: 2,
-    borderRadius: 1,
-    background: "var(--text-primary)",
-  },
 };

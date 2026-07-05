@@ -1,69 +1,125 @@
 /* ui/styles/tokens.css
    Design system tokens for the CCNA platform's workspace UI.
-   Layout paradigm borrowed deliberately from AppFlowy (sidebar tree + clean
-   content pane, per explicit request) — palette and category-color system
-   are original, tuned for a network-engineering audience rather than a
-   generic workspace tool.
+   Palette, radius, and the glass-panel / floating-pill mobile nav pattern
+   are ported 1:1 from the HLOS "learner" shell design system (Ahmed's own
+   product) at his request — warm off-white surface, deep-ink text, teal
+   primary, amber for gaps/warnings, calm "clinical instrument panel" feel,
+   full light/dark support. Layout stays LTR (English networking content),
+   unlike HLOS's RTL shell — everything else about the visual language
+   (color roles, radius, active-state treatment, glass mobile nav) matches.
 */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-  /* Surfaces */
-  --ws-bg: #FAFAF8;            /* main content background - warm off-white */
-  --sidebar-bg: #F3F3EF;       /* sidebar background - one shade cooler/darker */
+  /* ─── LIGHT MODE — ported from HLOS's locked design system ──────────── */
+  --ws-bg: #FAF9F7;
+  --sidebar-bg: #FFFFFF;
   --card-bg: #FFFFFF;
-  --hover-bg: #ECECE7;
+  --hover-bg: #F0EEEA;
 
-  /* Borders */
-  --border: #E3E2DC;
-  --border-strong: #CFCEC6;
+  --border: #E4E1DB;
+  --border-strong: #D3CFC6;
 
-  /* Text */
-  --text-primary: #1A1A18;
-  --text-secondary: #6B6B65;
-  --text-muted: #9C9B94;
+  --text-primary: #16242F;
+  --text-secondary: #5C6B73;
+  --text-muted: #8B98A0;
 
-  /* Accent (primary actions, active nav state) */
-  --accent: #6C5CE7;
-  --accent-bg: #EEECFC;
-  --accent-text: #4B3FB0;
+  --accent: #0F6B6B;
+  --accent-bg: rgba(15, 107, 107, 0.13);
+  --accent-text: #0F6B6B;
+
+  --warning: #B45309;
+  --warning-bg: rgba(180, 83, 9, 0.12);
+  --danger: #A32D2D;
+  --danger-bg: rgba(163, 45, 45, 0.10);
 
   /* Domain category colors — functional, not decorative.
      Used consistently: sidebar dot, content header accent border, badges. */
-  --domain-routing: #2E5AAC;      /* OSPF, Routing Table, FHRP */
+  --domain-routing: #2E5AAC;
   --domain-routing-bg: #E8EFFA;
-  --domain-switching: #B8860B;    /* Port Security, VLAN/Trunk (future) */
+  --domain-switching: #B8860B;
   --domain-switching-bg: #FBF3DF;
-  --domain-security: #C0392B;     /* Security, ACL, DHCP Snooping/DAI */
+  --domain-security: #C0392B;
   --domain-security-bg: #FBEAE8;
-  --domain-ip-services: #0F6E56;  /* NAT, DHCP, DNS, SNMP, NTP, Syslog */
+  --domain-ip-services: #0F6E56;
   --domain-ip-services-bg: #E5F3EF;
-  --domain-automation: #6C5CE7;   /* Automation, SDN, SDA */
+  --domain-automation: #6C5CE7;
   --domain-automation-bg: #EEECFC;
-  --domain-wireless: #D85A30;     /* Wireless */
+  --domain-wireless: #D85A30;
   --domain-wireless-bg: #FBEEE7;
-  --domain-architecture: #5F5E5A; /* LAN/WAN Architecture, Cloud, QoS */
+  --domain-architecture: #5F5E5A;
   --domain-architecture-bg: #EFEEEA;
 
-  /* Difficulty (kept from TopicPage, unified here) */
   --difficulty-easy: #2E7D32;
   --difficulty-medium: #B8860B;
   --difficulty-hard: #C0392B;
 
-  /* Typography */
   --font-ui: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", Consolas, Menlo, monospace;
 
-  /* Layout */
-  --sidebar-width: 268px;
-  --radius: 8px;
+  --sidebar-width: 240px;
+  --radius: 10px;
   --radius-card: 12px;
+  --radius-pill: 999px;
+
+  color-scheme: light;
 }
 
-/* Motion — small, purposeful liveliness. Nothing loops forever; everything
-   plays once on mount/state-change so it reads as "responsive UI", not
-   "busy UI". Used by TopicPage, QuestionBankPage, ExamPage, ScenarioPage,
-   ReviewPage via plain className references (inline-style objects can't
-   express keyframes, so these stay in the global stylesheet). */
+[data-theme="dark"] {
+  /* ─── DARK MODE — warm ink-based, ported from HLOS dark theme ───────── */
+  --ws-bg: #0F1A21;
+  --sidebar-bg: #16242F;
+  --card-bg: #16242F;
+  --hover-bg: #1E3038;
+
+  --border: #263B44;
+  --border-strong: #33505C;
+
+  --text-primary: #E8EAEC;
+  --text-secondary: #93A4AD;
+  --text-muted: #6C828C;
+
+  --accent: #2A9D8F;
+  --accent-bg: rgba(42, 157, 143, 0.18);
+  --accent-text: #4FC3B4;
+
+  --warning: #D98A2B;
+  --warning-bg: rgba(217, 138, 43, 0.16);
+  --danger: #E05252;
+  --danger-bg: rgba(224, 82, 82, 0.14);
+
+  --domain-routing: #6C97E0;
+  --domain-routing-bg: rgba(108, 151, 224, 0.16);
+  --domain-switching: #D9A441;
+  --domain-switching-bg: rgba(217, 164, 65, 0.16);
+  --domain-security: #E07A6E;
+  --domain-security-bg: rgba(224, 122, 110, 0.16);
+  --domain-ip-services: #3EC49E;
+  --domain-ip-services-bg: rgba(62, 196, 158, 0.16);
+  --domain-automation: #9C8CF0;
+  --domain-automation-bg: rgba(156, 140, 240, 0.18);
+  --domain-wireless: #E3895E;
+  --domain-wireless-bg: rgba(227, 137, 94, 0.16);
+  --domain-architecture: #9AA5AB;
+  --domain-architecture-bg: rgba(154, 165, 171, 0.14);
+
+  --difficulty-easy: #3EC49E;
+  --difficulty-medium: #D9A441;
+  --difficulty-hard: #E07A6E;
+
+  color-scheme: dark;
+}
+
+body {
+  background: var(--ws-bg);
+  color: var(--text-primary);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* ─── Motion — small, purposeful liveliness ─────────────────────────────
+   Nothing loops forever; everything plays once on mount/state-change so it
+   reads as "responsive UI", not "busy UI". */
 
 @keyframes ccna-fade-up {
   from { opacity: 0; transform: translateY(6px); }
@@ -82,10 +138,6 @@
 }
 @keyframes ccna-spin {
   to { transform: rotate(360deg); }
-}
-@keyframes ccna-confetti-fall {
-  0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(120px) rotate(360deg); opacity: 0; }
 }
 
 .ccna-anim-fade-up { animation: ccna-fade-up 0.28s ease both; }
@@ -107,55 +159,50 @@
   transition: all 0.18s ease;
 }
 
-/* Mobile sidebar drawer ------------------------------------------------
-   Desktop: sidebar is a normal static-width column, hamburger/backdrop are
-   never shown. Below the breakpoint, the sidebar becomes a fixed,
-   off-canvas drawer that slides in from the left over a dimmed backdrop —
-   the hamburger button (shown only at this width) toggles it. */
-
-.ccna-hamburger-btn {
-  display: none;
+/* ─── Glass panel — ported from HLOS's global glass/glow identity ──────── */
+.ccna-glass {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-card);
+  box-shadow: 0 8px 32px rgba(15, 107, 107, 0.10);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+[data-theme="dark"] .ccna-glass {
+  background: rgba(22, 36, 47, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .ccna-glass {
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  }
+}
+.ccna-glass:hover {
+  box-shadow: 0 10px 36px rgba(15, 107, 107, 0.16);
+  border-color: rgba(15, 107, 107, 0.25);
 }
 
-.ccna-sidebar-backdrop {
-  display: none;
+/* Staggered reveal for mobile nav panel links */
+@keyframes ccna-stagger-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+.ccna-stagger-item { animation: ccna-stagger-in 0.22s ease both; }
+
+/* ─── Desktop sidebar / mobile floating pill nav ────────────────────────
+   Desktop (≥ 860px): sidebar is a normal static-width column; the floating
+   pill nav is hidden. Below the breakpoint: the sidebar is hidden and the
+   HLOS-style floating glass pill (brand · search · theme · menu) takes
+   over, expanding into a glass panel with the same grouped nav content. */
+
+.ccna-desktop-sidebar { display: flex; }
+.ccna-mobile-pill-nav { display: none; }
 
 @media (max-width: 860px) {
-  .ccna-hamburger-btn {
-    display: inline-flex;
-  }
+  .ccna-desktop-sidebar { display: none; }
+  .ccna-mobile-pill-nav { display: block; }
 
-  .ccna-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 40;
-    transform: translateX(-100%);
-    transition: transform 0.22s ease;
-    box-shadow: none;
-  }
-
-  .ccna-sidebar[data-open="true"] {
-    transform: translateX(0);
-    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.18);
-  }
-
-  .ccna-sidebar-backdrop[data-open="true"] {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.32);
-    z-index: 30;
-    animation: ccna-fade-up 0.18s ease both;
-  }
-
-  .ccna-main-mobile {
-    width: 100%;
-  }
-
-  .ccna-main-mobile > div {
-    padding-top: 56px !important;
-  }
+  .ccna-main-mobile { width: 100%; }
+  .ccna-main-mobile > div { padding-top: 68px !important; }
 }

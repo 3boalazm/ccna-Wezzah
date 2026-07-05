@@ -201,50 +201,52 @@ function TroubleshootingList({ items }: { items: TroubleshootingNote[] }) {
 }
 
 function DifficultyBadge({ value }: { value: Difficulty }) {
-  const color = value === "Hard" ? "#c0392b" : value === "Medium" ? "#b8860b" : "#2e7d32";
+  const color =
+    value === "Hard" ? "var(--difficulty-hard)" : value === "Medium" ? "var(--difficulty-medium)" : "var(--difficulty-easy)";
   return <span style={{ ...S.badge, background: color }}>{value}</span>;
 }
 
 function CompletenessBadge({ value }: { value: Completeness }) {
-  const color = value === "high" ? "#2e7d32" : value === "partial" ? "#b8860b" : "#c0392b";
+  const color =
+    value === "high" ? "var(--difficulty-easy)" : value === "partial" ? "var(--difficulty-medium)" : "var(--difficulty-hard)";
   return <span style={{ ...S.badge, background: color }}>{value}</span>;
 }
 
 // --- inline styles (self-contained, no CSS deps) ---------------------------
 
 const S: Record<string, React.CSSProperties> = {
-  page: { padding: "24px 0 0", fontFamily: "var(--font-ui, system-ui), -apple-system, Segoe UI, Roboto, sans-serif", color: "#1a1a1a", lineHeight: 1.5 },
-  tab: { padding: "6px 14px", border: "1px solid #ccc", borderRadius: 6, background: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 13 },
-  tabActive: { background: "#1a3d7c", color: "#fff", borderColor: "#1a3d7c" },
-  breadcrumb: { fontSize: 13, color: "#616161", marginBottom: 4 },
-  header: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, borderBottom: "2px solid #eee", paddingBottom: 12 },
+  page: { padding: "24px 0 0", fontFamily: "var(--font-ui, system-ui), -apple-system, Segoe UI, Roboto, sans-serif", color: "var(--text-primary)", lineHeight: 1.5 },
+  tab: { padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--card-bg)", cursor: "pointer", fontWeight: 600, fontSize: 13 },
+  tabActive: { background: "var(--accent)", color: "#fff", borderColor: "var(--accent)" },
+  breadcrumb: { fontSize: 13, color: "var(--text-secondary)", marginBottom: 4 },
+  header: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, borderBottom: "2px solid var(--border)", paddingBottom: 12 },
   h1: { margin: 0, fontSize: 30, letterSpacing: 0.5 },
   badges: { display: "flex", gap: 8, alignItems: "center" },
-  badge: { color: "#fff", padding: "3px 10px", borderRadius: 12, fontSize: 12, fontWeight: 700 },
-  metaBadge: { color: "#616161", fontSize: 12 },
-  overview: { fontSize: 16, color: "#333", marginTop: 16 },
-  gapsBanner: { background: "#fff8e1", border: "1px solid #ffe082", borderRadius: 6, padding: "8px 12px", fontSize: 13, color: "#7a5c00", margin: "12px 0" },
+  badge: { color: "#fff", padding: "3px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700 },
+  metaBadge: { color: "var(--text-secondary)", fontSize: 12 },
+  overview: { fontSize: 16, color: "var(--text-primary)", marginTop: 16 },
+  gapsBanner: { background: "var(--warning-bg)", border: "1px solid var(--warning)", borderRadius: "var(--radius)", padding: "8px 12px", fontSize: 13, color: "var(--warning)", margin: "12px 0" },
   section: { marginTop: 24 },
-  h2: { fontSize: 18, margin: "0 0 8px", color: "#1a3d7c", display: "flex", alignItems: "center", gap: 8 },
-  gapTag: { fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "#e0e0e0", color: "#5a5a5a", padding: "2px 6px", borderRadius: 4 },
+  h2: { fontSize: 18, margin: "0 0 8px", color: "var(--accent-text)", display: "flex", alignItems: "center", gap: 8 },
+  gapTag: { fontSize: 10, fontWeight: 700, textTransform: "uppercase", background: "var(--hover-bg)", color: "var(--text-secondary)", padding: "2px 6px", borderRadius: 4 },
   ul: { margin: 0, paddingLeft: 20 },
   li: { marginBottom: 6 },
   scrollX: { overflowX: "auto", maxWidth: "100%" },
   table: { borderCollapse: "collapse", width: "100%" },
   cmdCell: { padding: "6px 10px 6px 0", verticalAlign: "top", whiteSpace: "nowrap" },
-  purposeCell: { padding: "6px 0", verticalAlign: "top", color: "#444", fontSize: 14 },
-  code: { background: "#f4f4f4", padding: "2px 6px", borderRadius: 4, fontSize: 13, fontFamily: "Consolas, Menlo, monospace", color: "#a11" },
-  mono: { fontFamily: "Consolas, Menlo, monospace", fontSize: 13, background: "#f7f7f7", padding: 12, borderRadius: 6, whiteSpace: "pre-wrap" },
+  purposeCell: { padding: "6px 0", verticalAlign: "top", color: "var(--text-secondary)", fontSize: 14 },
+  code: { background: "var(--hover-bg)", padding: "2px 6px", borderRadius: 4, fontSize: 13, fontFamily: "var(--font-mono)", color: "var(--danger)" },
+  mono: { fontFamily: "var(--font-mono)", fontSize: 13, background: "var(--hover-bg)", padding: 12, borderRadius: "var(--radius)", whiteSpace: "pre-wrap" },
   cliBlock: { marginBottom: 14 },
   cliTitle: { fontWeight: 600, fontSize: 14, marginBottom: 4 },
-  pre: { background: "#1e1e1e", color: "#e6e6e6", padding: 12, borderRadius: 6, overflowX: "auto", fontSize: 13, margin: "0 0 4px" },
-  tsNote: { borderLeft: "3px solid #1a3d7c", paddingLeft: 12, marginBottom: 14, fontSize: 14 },
-  tsSymptom: { color: "#c0392b" },
-  tsCause: { color: "#b8860b" },
-  tsFix: { color: "#2e7d32" },
+  pre: { background: "#1e1e1e", color: "#e6e6e6", padding: 12, borderRadius: "var(--radius)", overflowX: "auto", fontSize: 13, margin: "0 0 4px" },
+  tsNote: { borderLeft: "3px solid var(--accent)", paddingLeft: 12, marginBottom: 14, fontSize: 14 },
+  tsSymptom: { color: "var(--danger)" },
+  tsCause: { color: "var(--warning)" },
+  tsFix: { color: "var(--difficulty-easy)" },
   chips: { display: "flex", flexWrap: "wrap", gap: 6 },
-  chip: { background: "#eef2fb", color: "#1a3d7c", padding: "3px 10px", borderRadius: 12, fontSize: 13, fontWeight: 600 },
-  muted: { color: "#595959", fontSize: 13 },
-  error: { background: "#fdecea", border: "1px solid #f5c6cb", borderRadius: 6, padding: "12px 14px", color: "#8a1c1c", marginBottom: 16 },
-  footer: { marginTop: 32, paddingTop: 12, borderTop: "1px solid #eee", fontSize: 12, color: "#999" },
+  chip: { background: "var(--accent-bg)", color: "var(--accent-text)", padding: "3px 10px", borderRadius: 999, fontSize: 13, fontWeight: 600 },
+  muted: { color: "var(--text-secondary)", fontSize: 13 },
+  error: { background: "var(--danger-bg)", border: "1px solid var(--danger)", borderRadius: "var(--radius)", padding: "12px 14px", color: "var(--danger)", marginBottom: 16 },
+  footer: { marginTop: 32, paddingTop: 12, borderTop: "1px solid var(--border)", fontSize: 12, color: "var(--text-muted)" },
 };
