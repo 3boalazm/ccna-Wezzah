@@ -1,19 +1,20 @@
 // ui/pages/QuestionBankPage.tsx
-// The ONE engine page that can genuinely work right now, because
-// engines/question-engine/index.ts is fully implemented (unlike exam/
-// troubleshooting/review/adaptive, which still throw "Not implemented").
-// Calls questionEngine.generateQuestionSet() directly against the active
-// topic + its direct relations (depth 1, same default the engine itself uses).
+// Question Bank — now a two-phase flow instead of dropping straight into
+// question 1: a setup screen (difficulty filter, live count preview),
+// mirroring HLOS's practice/page.tsx "pick domain → count → difficulty →
+// start" pattern, then a focus-mode session (chrome hidden via
+// onFocusChange, matching HLOS's distraction-free assess/session screen).
 
 import React, { useMemo, useState } from "react";
 import * as questionEngine from "../../engines/question-engine";
 import * as reviewEngine from "../../engines/review-engine";
 import { getCurrentUserId } from "../../services/current-user";
 import RecallAnswer from "../components/RecallAnswer";
-import type { QuestionItem } from "../../engines/knowledge-engine/types";
+import type { QuestionItem, Difficulty } from "../../engines/knowledge-engine/types";
 
 export interface QuestionBankPageProps {
   topicId: string;
+  onFocusChange?: (focused: boolean) => void;
 }
 
 interface AnsweredState {
@@ -22,8 +23,11 @@ interface AnsweredState {
   correct: boolean | null; // null = typed but not yet graded
 }
 
-export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
-  const questions = useMemo<QuestionItem[]>(() => {
+const LETTERS = ["A", "B", "C", "D", "E", "F"];
+const DIFFICULTY_FILTERS: Array<Difficulty | "All"> = ["All", "Easy", "Medium", "Hard"];
+
+export default function QuestionBankPage({ topicId, onFocusChange }: QuestionBankPageProps) {
+  const allQuestions = useMemo<QuestionItem[]>(() => {
     try {
       return questionEngine.generateQuestionSet({ topicId, depth: 1 });
     } catch {
@@ -31,10 +35,18 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
     }
   }, [topicId]);
 
+  const [difficultyFilter, setDifficultyFilter] = useState<Difficulty | "All">("All");
+  const [started, setStarted] = useState(false);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AnsweredState>>({});
 
-  if (questions.length === 0) {
+  const questions = useMemo(
+    () =>
+      difficultyFilter === "All" ? allQuestions : allQuestions.filter((q) => q.difficulty === difficultyFilter),
+    [allQuestions, difficultyFilter]
+  );
+
+  if (allQuestions.length === 0) {
     return (
       <div style={S.emptyState}>
         <strong>No questions available for "{topicId}" yet.</strong>
@@ -47,8 +59,65 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
     );
   }
 
+  // --- Phase 1: setup screen --------------------------------------------
+  if (!started) {
+    return (
+      <div className="ccna-anim-fade-up" style={S.setupWrap}>
+        <div style={S.setupHeader}>
+          <h1 style={S.setupTitle}>Question bank</h1>
+          <p style={S.setupSubtitle}>
+            {topicId.toUpperCase()} and its directly related topics · type-in-the-answer drills
+          </p>
+        </div>
+
+        <div style={S.setupCard}>
+          <label style={S.setupLabel}>Difficulty</label>
+          <div style={S.pillRow}>
+            {DIFFICULTY_FILTERS.map((d) => {
+              const count = d === "All" ? allQuestions.length : allQuestions.filter((q) => q.difficulty === d).length;
+              const active = difficultyFilter === d;
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDifficultyFilter(d)}
+                  className="ccna-hoverable ccna-press"
+                  style={{ ...S.pill, ...(active ? S.pillActive : null) }}
+                  disabled={count === 0}
+                >
+                  {d} <span style={S.pillCount}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={S.quotaRow}>
+            <span style={S.quotaLabel}>Questions in this session</span>
+            <span style={S.quotaValue}>{questions.length}</span>
+          </div>
+
+          <button
+            type="button"
+            className="ccna-hoverable ccna-press"
+            style={S.startBtn}
+            disabled={questions.length === 0}
+            onClick={() => {
+              setIndex(0);
+              setAnswers({});
+              setStarted(true);
+              onFocusChange?.(true);
+            }}
+          >
+            🎯 Start practicing
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Phase 2: results ---------------------------------------------------
   if (index >= questions.length) {
-    const graded = questions.filter((q) => answers[q.id]?.correct !== null && answers[q.id] !== undefined);
+    const graded = questions.filter((q) => answers[q.id]?.correct !== undefined && answers[q.id]?.correct !== null);
     const correct = graded.filter((q) => answers[q.id].correct).length;
     const pct = graded.length ? Math.round((correct / graded.length) * 100) : 0;
     return (
@@ -59,17 +128,17 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
           {pct}%
         </div>
         <p style={S.muted}>
-          {correct} correct out of {graded.length} graded questions.
+          {correct} correct out of {graded.length} graded ({questions.length - graded.length} skipped).
         </p>
         <button
           style={S.restartBtn}
           className="ccna-hoverable ccna-press"
           onClick={() => {
-            setIndex(0);
-            setAnswers({});
+            setStarted(false);
+            onFocusChange?.(false);
           }}
         >
-          Start again
+          Practice again
         </button>
       </div>
     );
@@ -119,9 +188,7 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
         </span>
       </div>
       <div style={S.progressTrack}>
-        <div
-          style={{ ...S.progressFill, width: `${(answeredCount / questions.length) * 100}%` }}
-        />
+        <div style={{ ...S.progressFill, width: `${(answeredCount / questions.length) * 100}%` }} />
       </div>
 
       <div
@@ -129,11 +196,9 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
         style={{
           ...S.card,
           borderColor:
-            state?.correct === true ? "#2E7D32" : state?.correct === false ? "#C0392B" : "var(--border, #E3E2DC)",
+            state?.correct === true ? "var(--difficulty-easy)" : state?.correct === false ? "var(--difficulty-hard)" : "var(--border)",
         }}
-        className={
-          "ccna-anim-fade-up" + (state?.correct === false ? " ccna-anim-shake" : "")
-        }
+        className={"ccna-anim-fade-up" + (state?.correct === false ? " ccna-anim-shake" : "")}
       >
         <div style={S.qmeta}>
           <span style={S.topicTag}>{q.source_topic.toUpperCase()}</span>
@@ -147,11 +212,17 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
 
         {q.format === "mcq" && q.options && (
           <div>
-            {q.options.map((opt) => {
+            {q.options.map((opt, i) => {
               let style = { ...S.option };
+              let letterStyle = { ...S.optionLetter };
               if (state) {
-                if (opt === q.correct_answer) style = { ...style, ...S.optionCorrect };
-                else if (opt === state.picked) style = { ...style, ...S.optionWrong };
+                if (opt === q.correct_answer) {
+                  style = { ...style, ...S.optionCorrect };
+                  letterStyle = { ...letterStyle, ...S.optionLetterCorrect };
+                } else if (opt === state.picked) {
+                  style = { ...style, ...S.optionWrong };
+                  letterStyle = { ...letterStyle, ...S.optionLetterWrong };
+                }
               }
               return (
                 <button
@@ -162,6 +233,7 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
                   style={style}
                   className={!state ? "ccna-hoverable ccna-press" : undefined}
                 >
+                  <span style={letterStyle}>{LETTERS[i]}</span>
                   {opt}
                 </button>
               );
@@ -183,12 +255,18 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
         <button
           type="button"
           style={S.navBtn}
+          className="ccna-hoverable ccna-press"
           disabled={index === 0}
           onClick={() => setIndex((i) => Math.max(0, i - 1))}
         >
           Previous
         </button>
-        <button type="button" style={S.navBtn} onClick={() => setIndex((i) => i + 1)}>
+        <button
+          type="button"
+          style={S.navBtn}
+          className="ccna-hoverable ccna-press"
+          onClick={() => setIndex((i) => i + 1)}
+        >
           {state ? "Next" : "Skip"}
         </button>
       </div>
@@ -197,6 +275,20 @@ export default function QuestionBankPage({ topicId }: QuestionBankPageProps) {
 }
 
 const S: Record<string, React.CSSProperties> = {
+  setupWrap: { maxWidth: 480, margin: "20px auto 0" },
+  setupHeader: { textAlign: "center", marginBottom: 20 },
+  setupTitle: { fontSize: 22, margin: "0 0 6px", color: "var(--text-primary)" },
+  setupSubtitle: { fontSize: 13, color: "var(--text-secondary)", margin: 0 },
+  setupCard: { background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: "var(--radius-card)", padding: "22px 22px 20px" },
+  setupLabel: { display: "block", fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)", marginBottom: 10 },
+  pillRow: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 },
+  pill: { padding: "8px 14px", borderRadius: 999, border: "1px solid var(--border)", background: "var(--card-bg)", color: "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  pillActive: { borderColor: "var(--accent)", background: "var(--accent-bg)", color: "var(--accent-text)" },
+  pillCount: { fontSize: 11, opacity: 0.7, marginLeft: 3, fontFamily: "var(--font-mono)" },
+  quotaRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderRadius: 10, background: "var(--hover-bg)", fontSize: 12.5, marginBottom: 18 },
+  quotaLabel: { color: "var(--text-secondary)" },
+  quotaValue: { fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-mono)" },
+  startBtn: { width: "100%", padding: "13px 0", borderRadius: 10, border: "none", background: "var(--accent)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" },
   page: { fontFamily: "var(--font-ui, system-ui)" },
   topbar: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   scorePill: { fontSize: 12.5, fontWeight: 700, padding: "5px 12px", borderRadius: 999, background: "var(--accent-bg, #EEECFC)", color: "var(--accent-text, #4B3FB0)" },
@@ -209,9 +301,12 @@ const S: Record<string, React.CSSProperties> = {
   diffTag: { fontSize: 11, color: "var(--text-muted, #9C9B94)" },
   qnum: { marginLeft: "auto", fontSize: 12, color: "var(--text-muted, #9C9B94)" },
   prompt: { fontSize: 15.5, lineHeight: 1.5, margin: "0 0 14px" },
-  option: { display: "block", width: "100%", textAlign: "left", padding: "11px 14px", marginBottom: 8, border: "1px solid var(--border, #E3E2DC)", borderRadius: 8, background: "var(--card-bg)", fontSize: 14, cursor: "pointer", color: "var(--text-primary, #1A1A18)" },
-  optionCorrect: { background: "#E7F3E8", borderColor: "#2E7D32", color: "#1c4a20", fontWeight: 600 },
-  optionWrong: { background: "#FBEAE8", borderColor: "#C0392B", color: "#7a1f1f", fontWeight: 600 },
+  option: { display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", padding: "11px 14px", marginBottom: 8, border: "1px solid var(--border, #E3E2DC)", borderRadius: 8, background: "var(--card-bg)", fontSize: 14, cursor: "pointer", color: "var(--text-primary, #1A1A18)" },
+  optionLetter: { width: 22, height: 22, borderRadius: "50%", border: "1.5px solid var(--border-strong)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", flexShrink: 0 },
+  optionLetterCorrect: { borderColor: "var(--difficulty-easy)", background: "var(--difficulty-easy)", color: "#fff" },
+  optionLetterWrong: { borderColor: "var(--difficulty-hard)", background: "var(--difficulty-hard)", color: "#fff" },
+  optionCorrect: { background: "rgba(46,125,50,0.12)", borderColor: "var(--difficulty-easy)", color: "var(--difficulty-easy)", fontWeight: 600 },
+  optionWrong: { background: "var(--danger-bg)", borderColor: "var(--difficulty-hard)", color: "var(--difficulty-hard)", fontWeight: 600 },
   navRow: { display: "flex", justifyContent: "space-between" },
   navBtn: { padding: "6px 14px", border: "1px solid var(--border, #E3E2DC)", borderRadius: 999, background: "var(--card-bg)", fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
   emptyState: { padding: "40px 20px", textAlign: "center", color: "var(--text-secondary, #6B6B65)" },

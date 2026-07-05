@@ -1,15 +1,18 @@
 // ui/layout/WorkspaceLayout.tsx
 // The app shell: Sidebar (desktop) / MobileNav (< 860px floating pill) +
-// main content pane, scrollable. Visual language ported from the HLOS
-// learner shell per Ahmed's request (see Sidebar.tsx / MobileNav.tsx
-// headers for details) — CSS alone decides which nav renders at a given
-// width (.ccna-desktop-sidebar / .ccna-mobile-pill-nav in tokens.css), so
-// there's no layout-thrash on resize and no duplicated nav state.
+// main content pane. Owns the top-level "what's showing" state — a
+// Dashboard home view (default), a single Topic view, or one of the four
+// engine pages — so Sidebar/MobileNav/DashboardPage can all trigger
+// navigation without prop-drilling through main.tsx. Exam and Question
+// Bank can additionally request "focus mode" (hides chrome entirely,
+// ported from HLOS's distraction-free assess/session screen) via the
+// onEnterFocusMode/onExitFocusMode callbacks passed to their pages.
 
 import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import MobileNav from "./MobileNav";
 import { domainOf } from "./domains";
+import DashboardPage from "../pages/DashboardPage";
 import QuestionBankPage from "../pages/QuestionBankPage";
 import ExamPage from "../pages/ExamPage";
 import ScenarioPage from "../pages/ScenarioPage";
@@ -29,8 +32,10 @@ export interface WorkspaceLayoutProps {
   topicIds: string[];
   activeTopicId: string;
   onSelectTopic: (topicId: string) => void;
-  children: React.ReactNode; // the TopicPage content, shown when no engine is active
+  children: React.ReactNode; // the TopicPage content, shown when view === "topic"
 }
+
+type View = "home" | "topic";
 
 export default function WorkspaceLayout({
   topicIds,
@@ -38,25 +43,60 @@ export default function WorkspaceLayout({
   onSelectTopic,
   children,
 }: WorkspaceLayoutProps) {
+  const [view, setView] = useState<View>("home");
   const [activeEngine, setActiveEngine] = useState<string | undefined>(undefined);
+  const [focusMode, setFocusMode] = useState(false);
   const accent = DOMAIN_ACCENT[domainOf(activeTopicId)];
 
   const selectTopic = (t: string) => {
     setActiveEngine(undefined);
+    setFocusMode(false);
+    setView("topic");
     onSelectTopic(t);
+  };
+
+  const selectEngine = (id: string) => {
+    setActiveEngine(id);
+    setFocusMode(false);
+  };
+
+  const goHome = () => {
+    setActiveEngine(undefined);
+    setFocusMode(false);
+    setView("home");
   };
 
   let mainContent: React.ReactNode;
   if (activeEngine === "question-bank") {
-    mainContent = <QuestionBankPage topicId={activeTopicId} />;
+    mainContent = <QuestionBankPage topicId={activeTopicId} onFocusChange={setFocusMode} />;
   } else if (activeEngine === "exam") {
-    mainContent = <ExamPage />;
+    mainContent = <ExamPage onFocusChange={setFocusMode} />;
   } else if (activeEngine === "troubleshooting") {
-    mainContent = <ScenarioPage />;
+    mainContent = <ScenarioPage onFocusChange={setFocusMode} />;
   } else if (activeEngine === "review") {
     mainContent = <ReviewPage />;
+  } else if (view === "home") {
+    mainContent = (
+      <DashboardPage topicIds={topicIds} onSelectTopic={selectTopic} onSelectEngine={selectEngine} />
+    );
   } else {
-    mainContent = children; // no engine selected -> showing a topic
+    mainContent = children;
+  }
+
+  if (focusMode) {
+    // Distraction-free: no sidebar/mobile nav at all, full-bleed content
+    // with just a minimal exit affordance — matches HLOS's exam-session
+    // pattern of hiding the shell entirely during a timed run.
+    return (
+      <div style={S.focusShell}>
+        <button type="button" onClick={goHome} className="ccna-hoverable ccna-press" style={S.focusExit}>
+          ← Exit
+        </button>
+        <div style={S.focusContent} className="ccna-anim-fade-up">
+          {mainContent}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -66,24 +106,28 @@ export default function WorkspaceLayout({
         activeTopicId={activeTopicId}
         onSelectTopic={selectTopic}
         activeEngine={activeEngine}
-        onSelectEngine={setActiveEngine}
+        onSelectEngine={selectEngine}
+        isHomeActive={view === "home" && !activeEngine}
+        onGoHome={goHome}
       />
       <MobileNav
         topicIds={topicIds}
         activeTopicId={activeTopicId}
         onSelectTopic={selectTopic}
         activeEngine={activeEngine}
-        onSelectEngine={setActiveEngine}
+        onSelectEngine={selectEngine}
+        isHomeActive={view === "home" && !activeEngine}
+        onGoHome={goHome}
       />
       <main
         style={{
           ...S.main,
-          borderTop: `3px solid ${activeEngine ? "var(--accent)" : accent}`,
+          borderTop: `3px solid ${activeEngine ? "var(--accent)" : view === "home" ? "var(--accent)" : accent}`,
           transition: "border-color 0.2s ease",
         }}
         className="ccna-main-mobile"
       >
-        <div key={activeEngine ?? activeTopicId} style={S.content} className="ccna-anim-fade-up">
+        <div key={activeEngine ?? view + activeTopicId} style={S.content} className="ccna-anim-fade-up">
           {mainContent}
         </div>
       </main>
@@ -95,4 +139,20 @@ const S: Record<string, React.CSSProperties> = {
   shell: { display: "flex", minHeight: "100vh", background: "var(--ws-bg)" },
   main: { flex: 1, overflowY: "auto", minWidth: 0 },
   content: { maxWidth: 860, margin: "0 auto", padding: "0 20px 80px" },
+  focusShell: { minHeight: "100vh", background: "var(--ws-bg)" },
+  focusExit: {
+    position: "fixed",
+    top: 14,
+    left: 14,
+    zIndex: 20,
+    padding: "7px 14px",
+    borderRadius: 999,
+    border: "1px solid var(--border)",
+    background: "var(--card-bg)",
+    color: "var(--text-secondary)",
+    fontSize: 12.5,
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  focusContent: { maxWidth: 760, margin: "0 auto", padding: "60px 20px 60px" },
 };

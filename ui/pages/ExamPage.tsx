@@ -1,9 +1,9 @@
 // ui/pages/ExamPage.tsx
-// Timed, full-length simulation built by the Exam Engine from the default
-// blueprint (domain-weighted question mix). No penalty for guessing —
-// every question can always be skipped, per the exam-engine's own contract
-// comment. Score is broken down per-domain at the end, mirroring how the
-// real CCNA score report is organized.
+// Timed, full-length simulation built by the Exam Engine. Session view is
+// ported from HLOS's distraction-free assess/session screen (focus mode —
+// chrome hidden via onFocusChange, lettered A/B/C/D options, flag-for-
+// review). Results use the same "3-beat" staged reveal as HLOS's
+// assess/results page: score → domain bars → ranked weakest-domains list.
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as examEngine from "../../engines/exam-engine";
@@ -12,18 +12,32 @@ import { getCurrentUserId } from "../../services/current-user";
 import RecallAnswer from "../components/RecallAnswer";
 import type { ExamSession } from "../../engines/exam-engine";
 
+export interface ExamPageProps {
+  onFocusChange?: (focused: boolean) => void;
+}
+
 interface ExamAnswerState {
   picked?: string;
   typed?: string;
   correct: boolean | null; // null = typed but not yet graded (recall formats)
 }
 
-export default function ExamPage() {
+const LETTERS = ["A", "B", "C", "D", "E", "F"];
+
+function masteryColor(score: number): string {
+  if (score >= 70) return "var(--difficulty-easy)";
+  if (score >= 40) return "var(--warning)";
+  return "var(--difficulty-hard)";
+}
+
+export default function ExamPage({ onFocusChange }: ExamPageProps) {
   const [session, setSession] = useState<ExamSession | null>(null);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, ExamAnswerState>>({});
+  const [flagged, setFlagged] = useState<Set<string>>(new Set());
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [beat, setBeat] = useState(0);
   const timerRef = useRef<number | null>(null);
 
   const start = () => {
@@ -31,8 +45,10 @@ export default function ExamPage() {
     setSession(s);
     setIndex(0);
     setAnswers({});
+    setFlagged(new Set());
     setFinished(false);
     setSecondsLeft(s.time_limit_minutes * 60);
+    onFocusChange?.(true);
   };
 
   useEffect(() => {
@@ -51,6 +67,21 @@ export default function ExamPage() {
     };
   }, [session, finished]);
 
+  const isResultsScreen = !!session && (finished || index >= session.questions.length);
+
+  useEffect(() => {
+    if (!isResultsScreen) return;
+    onFocusChange?.(false);
+    setBeat(0);
+    const t1 = window.setTimeout(() => setBeat(1), 300);
+    const t2 = window.setTimeout(() => setBeat(2), 1000);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isResultsScreen]);
+
   const domainBreakdown = useMemo(() => {
     if (!session) return [];
     const byTopic = new Map<string, { total: number; correct: number }>();
@@ -60,8 +91,12 @@ export default function ExamPage() {
       if (answers[q.id]?.correct === true) entry.correct += 1;
       byTopic.set(q.source_topic, entry);
     }
-    return [...byTopic.entries()].sort((a, b) => b[1].total - a[1].total);
+    return [...byTopic.entries()]
+      .map(([topic, stat]) => ({ topic, ...stat, pct: stat.total ? Math.round((stat.correct / stat.total) * 100) : 0 }))
+      .sort((a, b) => b.total - a.total);
   }, [session, answers]);
+
+  const weakest = useMemo(() => [...domainBreakdown].sort((a, b) => a.pct - b.pct).slice(0, 3), [domainBreakdown]);
 
   if (!session) {
     return (
@@ -84,40 +119,58 @@ export default function ExamPage() {
   const graded = session.questions.filter((q) => answers[q.id]?.correct !== undefined && answers[q.id]?.correct !== null);
   const correctCount = graded.filter((q) => answers[q.id].correct).length;
 
-  if (finished || index >= session.questions.length) {
+  if (isResultsScreen) {
     const pct = graded.length ? Math.round((correctCount / graded.length) * 100) : 0;
     return (
-      <div style={S.finish} className="ccna-anim-fade-up">
-        <div style={S.finishBadge}>{pct >= 80 ? "🏆" : pct >= 50 ? "🙂" : "📚"}</div>
-        <h2 style={S.finishTitle}>Exam session finished</h2>
-        <div style={S.bigScore} className="ccna-anim-pop">
-          {pct}%
+      <div style={S.finish}>
+        <div style={{ ...S.beat, opacity: 1 }} className="ccna-anim-fade-up">
+          <div style={S.finishBadge}>{pct >= 80 ? "🏆" : pct >= 50 ? "🙂" : "📚"}</div>
+          <h2 style={S.finishTitle}>Exam session finished</h2>
+          <div style={S.bigScore} className="ccna-anim-pop">
+            {pct}%
+          </div>
+          <p style={S.muted}>
+            {correctCount} correct out of {graded.length} answered ({session.questions.length} total,{" "}
+            {session.questions.length - graded.length} skipped, {flagged.size} flagged for review).
+          </p>
         </div>
-        <p style={S.muted}>
-          {correctCount} correct out of {graded.length} answered ({session.questions.length} total,{" "}
-          {session.questions.length - graded.length} skipped).
-        </p>
-        <div style={S.breakdown}>
-          {domainBreakdown.map(([topic, stat]) => (
-            <div key={topic} style={S.breakdownRow}>
-              <span style={S.breakdownTopic}>{topic.toUpperCase()}</span>
+
+        <div style={{ ...S.breakdown, opacity: beat >= 1 ? 1 : 0, transition: "opacity .4s" }}>
+          <p style={S.beatLabel}>Score by domain</p>
+          {domainBreakdown.map((d, i) => (
+            <div key={d.topic} style={{ ...S.breakdownRow, animationDelay: `${i * 60}ms` }} className={beat >= 1 ? "ccna-anim-fade-up" : undefined}>
+              <span style={S.breakdownTopic}>{d.topic.toUpperCase()}</span>
               <div style={S.breakdownTrack}>
-                <div
-                  style={{
-                    ...S.breakdownFill,
-                    width: `${(stat.correct / stat.total) * 100}%`,
-                  }}
-                />
+                <div style={{ ...S.breakdownFill, width: `${d.pct}%`, background: masteryColor(d.pct) }} />
               </div>
-              <span style={S.breakdownScore}>
-                {stat.correct}/{stat.total}
+              <span style={{ ...S.breakdownScore, color: masteryColor(d.pct) }}>
+                {d.correct}/{d.total}
               </span>
             </div>
           ))}
         </div>
-        <button style={S.startBtn} className="ccna-hoverable ccna-press" onClick={start}>
-          Start a new exam
-        </button>
+
+        <div style={{ opacity: beat >= 2 ? 1 : 0, transform: beat >= 2 ? "translateY(0)" : "translateY(10px)", transition: "opacity .4s, transform .4s" }}>
+          {weakest.length > 0 && (
+            <>
+              <p style={{ ...S.beatLabel, marginTop: 22 }}>Focus next on</p>
+              <div style={S.weakList}>
+                {weakest.map((d, i) => (
+                  <div key={d.topic} style={S.weakRow}>
+                    <span style={{ ...S.weakRank, background: masteryColor(d.pct) }}>{i + 1}</span>
+                    <span style={S.weakTopic}>{d.topic.toUpperCase()}</span>
+                    <span style={{ ...S.weakScore, color: masteryColor(d.pct) }}>{d.pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          <div style={{ textAlign: "center" }}>
+            <button style={S.startBtn} className="ccna-hoverable ccna-press" onClick={start}>
+              Start a new exam
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -127,6 +180,16 @@ export default function ExamPage() {
   const mm = Math.floor(secondsLeft / 60);
   const ss = secondsLeft % 60;
   const lowTime = secondsLeft < 300;
+  const isFlagged = flagged.has(q.id);
+
+  const toggleFlag = () => {
+    setFlagged((prev) => {
+      const next = new Set(prev);
+      if (next.has(q.id)) next.delete(q.id);
+      else next.add(q.id);
+      return next;
+    });
+  };
 
   const answer = (picked: string) => {
     const correct = picked === q.correct_answer;
@@ -161,7 +224,7 @@ export default function ExamPage() {
         <span style={S.scorePill}>
           {correctCount} / {graded.length}
         </span>
-        <span style={{ ...S.timer, color: lowTime ? "#C0392B" : "var(--text-primary)" }}>
+        <span style={{ ...S.timer, color: lowTime ? "var(--difficulty-hard)" : "var(--text-primary)" }}>
           {lowTime ? "⏰ " : "⏱ "}
           {mm}:{ss.toString().padStart(2, "0")}
         </span>
@@ -170,26 +233,32 @@ export default function ExamPage() {
         </span>
       </div>
       <div style={S.progressTrack}>
-        <div
-          style={{ ...S.progressFill, width: `${((index + 1) / session.questions.length) * 100}%` }}
-        />
+        <div style={{ ...S.progressFill, width: `${((index + 1) / session.questions.length) * 100}%` }} />
       </div>
 
       <div key={q.id} style={S.card} className="ccna-anim-fade-up">
         <div style={S.qmeta}>
           <span style={S.topicTag}>{q.source_topic.toUpperCase()}</span>
           <span style={S.diffTag}>{q.difficulty}</span>
-          <span style={S.formatTag}>{q.format}</span>
+          <button type="button" onClick={toggleFlag} className="ccna-press" style={{ ...S.flagBtn, ...(isFlagged ? S.flagBtnActive : null) }}>
+            🚩 {isFlagged ? "Flagged" : "Flag"}
+          </button>
         </div>
         <p style={S.prompt}>{q.prompt}</p>
 
         {q.format === "mcq" && q.options && (
           <div>
-            {q.options.map((opt) => {
+            {q.options.map((opt, i) => {
               let style = { ...S.option };
+              let letterStyle = { ...S.optionLetter };
               if (state) {
-                if (opt === q.correct_answer) style = { ...style, ...S.optionCorrect };
-                else if (opt === state.picked) style = { ...style, ...S.optionWrong };
+                if (opt === q.correct_answer) {
+                  style = { ...style, ...S.optionCorrect };
+                  letterStyle = { ...letterStyle, ...S.optionLetterCorrect };
+                } else if (opt === state.picked) {
+                  style = { ...style, ...S.optionWrong };
+                  letterStyle = { ...letterStyle, ...S.optionLetterWrong };
+                }
               }
               return (
                 <button
@@ -200,6 +269,7 @@ export default function ExamPage() {
                   style={style}
                   className={!state ? "ccna-hoverable ccna-press" : undefined}
                 >
+                  <span style={letterStyle}>{LETTERS[i]}</span>
                   {opt}
                 </button>
               );
@@ -245,39 +315,49 @@ const S: Record<string, React.CSSProperties> = {
   introBadge: {
     display: "inline-block", fontSize: 12, fontWeight: 700, textTransform: "uppercase",
     letterSpacing: 0.5, padding: "5px 14px", borderRadius: 999,
-    background: "var(--accent-bg, #EEECFC)", color: "var(--accent-text, #4B3FB0)", marginBottom: 16,
+    background: "var(--accent-bg)", color: "var(--accent-text)", marginBottom: 16,
   },
   introTitle: { fontSize: 24, margin: "0 0 12px", color: "var(--text-primary)" },
   introBody: { fontSize: 15, color: "var(--text-secondary)", maxWidth: 480, margin: "0 auto 24px", lineHeight: 1.6 },
-  startBtn: { padding: "12px 28px", borderRadius: 8, border: "none", background: "var(--accent, #6C5CE7)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" },
+  startBtn: { padding: "12px 28px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" },
   page: { fontFamily: "var(--font-ui)" },
   topbar: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 8 },
-  scorePill: { fontSize: 12.5, fontWeight: 700, padding: "5px 12px", borderRadius: 999, background: "var(--accent-bg, #EEECFC)", color: "var(--accent-text, #4B3FB0)" },
+  scorePill: { fontSize: 12.5, fontWeight: 700, padding: "5px 12px", borderRadius: 999, background: "var(--accent-bg)", color: "var(--accent-text)" },
   timer: { fontSize: 15, fontWeight: 700, fontVariantNumeric: "tabular-nums" },
   progressLabel: { fontSize: 12, color: "var(--text-muted)" },
-  progressTrack: { height: 6, borderRadius: 3, background: "var(--border, #E3E2DC)", overflow: "hidden", marginBottom: 20 },
-  progressFill: { height: "100%", background: "var(--accent, #6C5CE7)", transition: "width .2s" },
-  card: { background: "var(--card-bg)", border: "1px solid var(--border, #E3E2DC)", borderRadius: 12, padding: "20px 22px", marginBottom: 16 },
+  progressTrack: { height: 6, borderRadius: 3, background: "var(--border)", overflow: "hidden", marginBottom: 20 },
+  progressFill: { height: "100%", background: "var(--accent)", transition: "width .2s" },
+  card: { background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: 12, padding: "20px 22px", marginBottom: 16 },
   qmeta: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10 },
-  topicTag: { fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 999, textTransform: "uppercase", background: "var(--accent-bg, #EEECFC)", color: "var(--accent-text, #4B3FB0)" },
+  topicTag: { fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 999, textTransform: "uppercase", background: "var(--accent-bg)", color: "var(--accent-text)" },
   diffTag: { fontSize: 11, color: "var(--text-muted)" },
-  formatTag: { marginLeft: "auto", fontSize: 11, color: "var(--text-muted)", fontStyle: "italic" },
+  flagBtn: { marginLeft: "auto", fontSize: 11.5, color: "var(--text-muted)", background: "transparent", border: "1px solid var(--border)", borderRadius: 999, padding: "3px 10px", cursor: "pointer" },
+  flagBtnActive: { color: "var(--warning)", borderColor: "var(--warning)", background: "var(--warning-bg)", fontWeight: 700 },
   prompt: { fontSize: 15.5, lineHeight: 1.5, margin: "0 0 14px" },
-  option: { display: "block", width: "100%", textAlign: "left", padding: "11px 14px", marginBottom: 8, border: "1px solid var(--border, #E3E2DC)", borderRadius: 8, background: "var(--card-bg)", fontSize: 14, cursor: "pointer", color: "var(--text-primary)" },
-  optionCorrect: { background: "#E7F3E8", borderColor: "#2E7D32", color: "#1c4a20", fontWeight: 600 },
-  optionWrong: { background: "#FBEAE8", borderColor: "#C0392B", color: "#7a1f1f", fontWeight: 600 },
-  recallBox: { padding: "12px 14px", background: "#F7F6FF", borderLeft: "3px solid var(--accent, #6C5CE7)", borderRadius: "0 8px 8px 0", fontSize: 13.5, color: "var(--text-secondary)" },
+  option: { display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", padding: "11px 14px", marginBottom: 8, border: "1px solid var(--border)", borderRadius: 8, background: "var(--card-bg)", fontSize: 14, cursor: "pointer", color: "var(--text-primary)" },
+  optionLetter: { width: 22, height: 22, borderRadius: "50%", border: "1.5px solid var(--border-strong)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", flexShrink: 0 },
+  optionLetterCorrect: { borderColor: "var(--difficulty-easy)", background: "var(--difficulty-easy)", color: "#fff" },
+  optionLetterWrong: { borderColor: "var(--difficulty-hard)", background: "var(--difficulty-hard)", color: "#fff" },
+  optionCorrect: { background: "rgba(46,125,50,0.12)", borderColor: "var(--difficulty-easy)", color: "var(--difficulty-easy)", fontWeight: 600 },
+  optionWrong: { background: "var(--danger-bg)", borderColor: "var(--difficulty-hard)", color: "var(--difficulty-hard)", fontWeight: 600 },
   navRow: { display: "flex", justifyContent: "space-between" },
-  navBtn: { padding: "6px 14px", border: "1px solid var(--border, #E3E2DC)", borderRadius: 999, background: "var(--card-bg)", fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
-  finish: { textAlign: "center", padding: "40px 20px" },
-  finishBadge: { fontSize: 36, marginBottom: 4 },
-  finishTitle: { fontSize: 22, margin: "0 0 6px" },
-  bigScore: { fontSize: 44, fontWeight: 700, color: "var(--accent, #6C5CE7)", margin: "10px 0" },
-  muted: { color: "var(--text-muted)", fontSize: 13.5 },
-  breakdown: { maxWidth: 420, margin: "24px auto", textAlign: "left" },
+  navBtn: { padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 999, background: "var(--card-bg)", fontSize: 12.5, fontWeight: 600, cursor: "pointer" },
+  finish: { padding: "20px 4px 40px", maxWidth: 480, margin: "0 auto" },
+  beat: {},
+  beatLabel: { fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: "var(--text-muted)", textAlign: "center", margin: "0 0 10px" },
+  finishBadge: { fontSize: 36, marginBottom: 4, textAlign: "center" },
+  finishTitle: { fontSize: 22, margin: "0 0 6px", textAlign: "center" },
+  bigScore: { fontSize: 44, fontWeight: 700, color: "var(--accent)", margin: "10px 0", textAlign: "center" },
+  muted: { color: "var(--text-muted)", fontSize: 13.5, textAlign: "center" },
+  breakdown: { margin: "24px 0" },
   breakdownRow: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 },
   breakdownTopic: { fontSize: 11, fontWeight: 700, width: 90, flexShrink: 0, color: "var(--text-secondary)" },
-  breakdownTrack: { flex: 1, height: 6, borderRadius: 3, background: "var(--border, #E3E2DC)", overflow: "hidden" },
-  breakdownFill: { height: "100%", background: "var(--accent, #6C5CE7)" },
-  breakdownScore: { fontSize: 12, width: 40, textAlign: "right", color: "var(--text-muted)" },
+  breakdownTrack: { flex: 1, height: 6, borderRadius: 3, background: "var(--border)", overflow: "hidden" },
+  breakdownFill: { height: "100%", transition: "width .5s ease" },
+  breakdownScore: { fontSize: 12, width: 40, textAlign: "right", fontWeight: 700 },
+  weakList: { display: "flex", flexDirection: "column", gap: 6, marginBottom: 22 },
+  weakRow: { display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: "var(--card-bg)", border: "1px solid var(--border)" },
+  weakRank: { width: 20, height: 20, borderRadius: "50%", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  weakTopic: { flex: 1, fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)" },
+  weakScore: { fontSize: 12.5, fontWeight: 700, fontFamily: "var(--font-mono)" },
 };

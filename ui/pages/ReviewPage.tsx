@@ -8,6 +8,8 @@ import React, { useMemo, useState } from "react";
 import * as reviewEngine from "../../engines/review-engine";
 import * as adaptiveEngine from "../../engines/adaptive-engine";
 import { getCurrentUserId } from "../../services/current-user";
+import { getDomainMastery } from "../lib/analytics";
+import RadarChart from "../components/RadarChart";
 
 export default function ReviewPage() {
   const userId = useMemo(() => getCurrentUserId(), []);
@@ -25,6 +27,11 @@ export default function ReviewPage() {
   const signals = useMemo(
     () => topicsSeen.map((t) => ({ topic: t, ...adaptiveEngine.getDifficultySignal(userId, t) })),
     [topicsSeen, userId]
+  );
+  const mastery = useMemo(
+    () => getDomainMastery(userId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userId, refreshTick]
   );
 
   if (forecast.length === 0) {
@@ -56,6 +63,15 @@ export default function ReviewPage() {
         <StatCard label="Scheduled" value={forecast.length - due.length} tone="scheduled" />
         <StatCard label="Topics tracked" value={topicsSeen.length} tone="topics" />
       </div>
+
+      {mastery.length >= 3 && (
+        <section style={{ ...S.section, textAlign: "center" }}>
+          <h2 style={{ ...S.h2, textAlign: "left" }}>Mastery by domain</h2>
+          <div style={S.radarWrap}>
+            <RadarChart data={mastery.map((m) => ({ label: m.label, score: m.score }))} size={240} />
+          </div>
+        </section>
+      )}
 
       {due.length > 0 && (
         <section style={S.section}>
@@ -124,9 +140,9 @@ export default function ReviewPage() {
 
 function StatCard({ label, value, tone }: { label: string; value: number; tone: string }) {
   const colors: Record<string, string> = {
-    due: "#C0392B",
-    scheduled: "var(--accent, #6C5CE7)",
-    topics: "#0F6E56",
+    due: "var(--difficulty-hard)",
+    scheduled: "var(--accent)",
+    topics: "var(--domain-ip-services)",
   };
   return (
     <div style={S.statCard} className="ccna-hoverable">
@@ -137,7 +153,7 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone: 
 }
 
 function TargetBadge({ value }: { value: "Easy" | "Medium" | "Hard" }) {
-  const color = value === "Hard" ? "#c0392b" : value === "Medium" ? "#b8860b" : "#2e7d32";
+  const color = value === "Hard" ? "var(--difficulty-hard)" : value === "Medium" ? "var(--difficulty-medium)" : "var(--difficulty-easy)";
   return <span style={{ ...S.targetBadge, background: color }}>{value}</span>;
 }
 
@@ -152,12 +168,13 @@ const S: Record<string, React.CSSProperties> = {
   statValue: { fontSize: 28, fontWeight: 700 },
   statLabel: { fontSize: 12, color: "var(--text-muted)", marginTop: 2 },
   section: { marginBottom: 26 },
+  radarWrap: { display: "flex", justifyContent: "center", background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: "var(--radius-card)", padding: "16px" },
   h2: { fontSize: 16, margin: "0 0 10px", color: "var(--text-primary)" },
   hint: { fontSize: 12.5, color: "var(--text-muted)", margin: "0 0 10px" },
   list: { display: "flex", flexDirection: "column", gap: 6 },
-  dueRow: { display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: "#FBEAE8", fontSize: 13 },
-  dueDot: { width: 7, height: 7, borderRadius: "50%", background: "#C0392B", flexShrink: 0 },
-  dueTopic: { fontWeight: 700, color: "#7a1f1f", width: 90 },
+  dueRow: { display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: "var(--danger-bg)", fontSize: 13 },
+  dueDot: { width: 7, height: 7, borderRadius: "50%", background: "var(--difficulty-hard)", flexShrink: 0 },
+  dueTopic: { fontWeight: 700, color: "var(--difficulty-hard)", width: 90 },
   dueId: { color: "var(--text-secondary)", flex: 1, fontFamily: "var(--font-mono)", fontSize: 12 },
   dueStreak: { color: "var(--text-muted)", fontSize: 12 },
   upcomingRow: { display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, background: "var(--card-bg)", border: "1px solid var(--border, #E3E2DC)", fontSize: 13 },

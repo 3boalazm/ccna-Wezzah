@@ -18,6 +18,8 @@ export interface MobileNavProps {
   onSelectTopic: (topicId: string) => void;
   activeEngine?: string;
   onSelectEngine?: (engineId: string) => void;
+  isHomeActive?: boolean;
+  onGoHome?: () => void;
 }
 
 const ENGINE_ITEMS = [
@@ -43,13 +45,15 @@ export default function MobileNav({
   onSelectTopic,
   activeEngine,
   onSelectEngine,
+  isHomeActive,
+  onGoHome,
 }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   // Close whenever the active selection changes elsewhere.
-  useEffect(() => setOpen(false), [activeTopicId, activeEngine]);
+  useEffect(() => setOpen(false), [activeTopicId, activeEngine, isHomeActive]);
 
   const filtered = useMemo(
     () =>
@@ -67,10 +71,12 @@ export default function MobileNav({
     <div style={S.wrap} className="ccna-mobile-pill-nav">
       {/* Pill */}
       <div style={{ ...S.pill, ...(open ? S.pillOpen : null) }} className="ccna-glass">
-        <span style={S.orb}>C</span>
+        <button type="button" onClick={onGoHome} style={S.orbBtn} className="ccna-press" aria-label="Go to dashboard">
+          C
+        </button>
         <div style={S.identity}>
           <p style={S.identityTitle}>CCNA workspace</p>
-          <p style={S.identitySubtitle}>{activeEngine ?? activeTopicId.toUpperCase()}</p>
+          <p style={S.identitySubtitle}>{activeEngine ?? (isHomeActive ? "Dashboard" : activeTopicId.toUpperCase())}</p>
         </div>
         <button
           type="button"
@@ -116,6 +122,16 @@ export default function MobileNav({
       {/* Panel */}
       {open && (
         <nav id="ccna-mobile-menu" aria-label="Main navigation" style={S.panel} className="ccna-glass ccna-anim-fade-up">
+          <button
+            type="button"
+            onClick={onGoHome}
+            className="ccna-stagger-item"
+            style={{ ...S.panelItem, marginBottom: 6, ...(isHomeActive ? S.panelItemActive : null) }}
+          >
+            <span aria-hidden="true">🏠</span>
+            Dashboard
+          </button>
+
           <p style={S.panelLabel}>Topics</p>
           <div style={S.panelList}>
             {groups.map(({ domain, topics }) => (
@@ -178,7 +194,7 @@ const S: Record<string, React.CSSProperties> = {
     transition: "box-shadow 0.2s ease",
   },
   pillOpen: { boxShadow: "0 10px 30px rgba(0,0,0,0.15)" },
-  orb: {
+  orbBtn: {
     width: 30,
     height: 30,
     borderRadius: 10,
@@ -190,6 +206,8 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+    border: "none",
+    cursor: "pointer",
   },
   identity: { minWidth: 0, flex: 1, lineHeight: 1.2 },
   identityTitle: { margin: 0, fontSize: 12.5, fontWeight: 600, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },

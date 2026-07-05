@@ -18,6 +18,8 @@ export interface SidebarProps {
   onSelectTopic: (topicId: string) => void;
   activeEngine?: string;
   onSelectEngine?: (engineId: string) => void;
+  isHomeActive?: boolean;
+  onGoHome?: () => void;
 }
 
 const ENGINE_ITEMS = [
@@ -43,6 +45,8 @@ export default function Sidebar({
   onSelectTopic,
   activeEngine,
   onSelectEngine,
+  isHomeActive,
+  onGoHome,
 }: SidebarProps) {
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useState<Partial<Record<Domain, boolean>>>({});
@@ -64,7 +68,16 @@ export default function Sidebar({
     <aside className="ccna-desktop-sidebar" style={S.sidebar} aria-label="Workspace navigation">
       {/* Brand row */}
       <div style={S.brandRow}>
-        <div style={S.brandMark}>C</div>
+        <button
+          type="button"
+          onClick={onGoHome}
+          style={S.brandMarkBtn}
+          className="ccna-hoverable ccna-press"
+          aria-label="Go to dashboard"
+          title="Dashboard"
+        >
+          C
+        </button>
         <div style={S.brandText}>
           <p style={S.brandTitle}>CCNA workspace</p>
           <p style={S.brandSubtitle}>200-301 · practice lab</p>
@@ -85,6 +98,17 @@ export default function Sidebar({
       </div>
 
       <div style={S.scrollArea}>
+        <button
+          type="button"
+          onClick={onGoHome}
+          aria-current={isHomeActive ? "page" : undefined}
+          className="ccna-transition-all"
+          style={{ ...S.item, paddingLeft: 8, marginBottom: 10, ...(isHomeActive ? S.itemActive : null) }}
+        >
+          <span aria-hidden="true">🏠</span>
+          Dashboard
+        </button>
+
         <div style={S.sectionLabel}>Topics</div>
         <div style={S.tree}>
           {groups.map(({ domain, topics }) => (
@@ -172,7 +196,7 @@ const S: Record<string, React.CSSProperties> = {
     marginBottom: 12,
     borderBottom: "1px solid var(--border)",
   },
-  brandMark: {
+  brandMarkBtn: {
     width: 34,
     height: 34,
     borderRadius: 10,
@@ -184,6 +208,8 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+    border: "none",
+    cursor: "pointer",
   },
   brandText: { minWidth: 0, flex: 1 },
   brandTitle: { margin: 0, fontSize: 13, fontWeight: 600, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
